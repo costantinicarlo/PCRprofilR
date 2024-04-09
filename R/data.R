@@ -1,0 +1,16 @@
+#' Mosquito rDNA
+#'
+#' A dataset of mosquito rDNA fragments from a PCR assay
+#'
+#' @format ## `mosquito`
+#' A data frame with 278 rows and 8 columns:
+#' \describe{
+#'   \item{WellID}{PCR plate microwell identifier.}
+#'   \item{SampleID}{sample identifier.}
+#'   \item{Type}{type of row record: lowerbound marker (LM), upperbound marker (UM), unknown (?), or sample DNA (NA).}
+#'   \item{Size}{DNA fragment size in base pairs.}
+#'   \item{Conc}{DNA fragment concentration in ng/µL.}
+#'   \item{Purity}{DNA fragment purity as a proportion of all fragments' total concentration.}
+#'   \item{MigrationTime_Start}{not used (only NAs).}
+#'   \item{MigrationTime_End}{not used (only NAs).}
+#' }

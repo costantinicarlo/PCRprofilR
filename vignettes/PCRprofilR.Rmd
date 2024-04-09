@@ -1,0 +1,177 @@
+---
+title: "PCRprofilR Workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{PCRprofilR Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r knitr-setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(6, 4)
+)
+```
+
+```{r setup}
+library(PCRprofilR)
+```
+
+## Introduction
+
+One biomolecular application of Polymerase Chain Reaction (PCR) technology is the amplification of fragments of nucleic acids (DNA, RNA) having diagnostic value. Examples include PCR assays to identify species, strains, or clones of diverse organisms as viruses, bacteria, plants, or arthropods. Other examples of more targeted applications include the determination of some qualities or properties of a biological sample like its sex, virulence, or population of origin. These diagnostic PCR assays are generally based on the isolation and amplification of a target DNA/RNA fragment by a simple or multiplexed PCR reaction with allele-specific oligonucleotide primers. Diagnosis is grounded on the recognition of these specific fragments by electrophoresis based on the number of their base pairs---a measure of their size. Detection of the target fragment in the DNA/RNA sample, which marks a "positive" outcome, provides evidence for the occurrence of the biological property under investigation (e.g. the presence of a certain clone).
+
+Electrophoresis was, and still is today, carried out on gels where nucleic acids are marked with pigments and then let 'run' under an electric field. Detection of the target fragments is then based on the presence of 'bands' on the gel at specific distances from the start position, each distance being correlated with the fragment's size. Assessment of the presence and intensity of these bands on the gel is often 'by eye'. Under some circumstances resulting in weak amplification of the target fragment(s), visual detection of the diagnostic band(s) can be the object of variable interpretations by the experimenter. This can induce in classification errors of the nucleic acid samples, thereby producing poor transparency and reproducibility of results based on this classification.
+
+Electrophoretic devices based on microfluidics technology can obviate some these shortcomings, and they can simplify and scale up the analysis of nucleic acids in biomolecular applications. Following a run and using specialised software, one can generally retrieve from these devices a text output file (usually in CSV format) containing the fragment size and concentration of the amplicons resulting from PCR amplification of each sample. Functions in the `{PCRprofilR}` package provide a simple way to visualise and automate retrieval of the information contained in these output files for downstream applications. One of these applications is the programmatic classification of DNA/RNA samples returning amplicons that are diagnostic based on their fragment size, insuring transparency and reproducibility of downstream data analyses that rely upon this classification.
+
+## Workflow
+
+The steps described below represent a typical workflow of how to use the functions in the `{PCRprofilR}` package.
+
+### Step 1. Load the device output file in the `Global Environment`
+
+The output file holding the electrophoresis run data must be first loaded in the `Global Environment` using `R` functions that import text files (e.g. `read_csv` in the `{readr}` package, or the `{base}` function `read.csv`). There are no specific functions in `{PCRprofilR}` for this purpose as the process will depend on idiosyncracies of the output format used by each particular device. In our example dataset we make use of a PerkinElmer LabChip® output file, as shown below.
+
+```{r data-structure}
+data(mosquito)
+str(mosquito)
+```
+
+In this case, there is a column specifying the PCR plate microwell identifier, another column with the  sample name, and two columns returning the concentration and size of each fragment. The rows in the file represent records pertaining to individual fragments; there can be therefore multiple rows for a single sample. Moreover, each sample has two special 'calibration' rows, one for the lower-bound and another for the upper-bound limits of the molecular ladder used to assess each fragment's size. There is therefore an additional column specifying the type of row record, with "LM" and "UM" assigned to the lower and upper limits of the ladder.
+
+The purpose of this step is to build a data frame that has a minimum of four columns. Other columns, if present in the device output file, are ignored for present purposes. It is essential that the columns in the data frame conform to the following names:
+
+1. `WellID`: this is the the column with the PCR plate microwell identifier. This is generally a combination of an uppercase letter (A to H or A to P, depending on the size of the PCR plate) followed by one or two numbers (01 to 12).
+
+1. `SampleID`: this is the column with the sample name. It is good practice to format each identifier as a string of no more than 10 ASCII characters or so.
+
+1. `Size`: this is the column with each fragment's size, usually expressed in base pairs (bp).
+
+1. `Conc`: this is the column with each fragment's concentration, usually expressed in ng/µL.
+
+Thus, it may be necessary to edit the header names in the text file to conform to the names accepted by the `{PCRprofilR}` functions or, alternatively, to change the names of the variables in the data frame after importation from the output text file.
+
+The resulting data frame is then used as one of the arguments in `{PCRprofilR}` functions.
+
+### Step 2. Explore PCR results to choose scoring settings: `PCRexplorer` function
+
+An important step in the workflow is to choose the most appropriate scoring settings for classification of the nucleic acid fragments. For this purpose, there are two parameters to identify: *tolerance* and *threshold*. **Tolerance** defines a window around the **target size** whose range is the lower and upper number of base pairs that are considered legitimate to represent the target size, once PCR errors are taken into account. **Threshold** is the minimum amplicon concentration above which the amplicon is considered to represent a positive outcome---*if its size falls in the range defined by target ± tolerance*. The outcome of the fragments classification will therefore depend on the specific values chosen for these two parameters.
+
+To help making this choice, the `PCRexplorer` function plots the observed fragments' size and concentration for all samples in the input data frame. The function needs two arguments, the name of the input data frame and a numeric scalar or vector with the target amplicon(s) size. Further optional arguments customise the appearance of the plot to help visualise relevant patterns in the figure.
+
+### Step 3. Visualise pherograms to check classification results: `PCRpherogram` function
+
+Once the tolerance and threshold parameters are chosen, one can produce the outcome of a particular choice and visualise the resulting classification of samples with the `PCRpherogram` function. `PCRpherogram` accepts only a single value for the target amplicon size parameter, that is the one that is of interest for the simulation of classification results. Only the target amplicon is highlighted in the output diagram.
+
+The purpose of this step is to experiment with different values of the three parameters amplicon size, tolerance, and threshold, and see how each sample is classified under a specific choice: positive reactions are highlighted in red in the pherogram.
+
+### Step 4. Apply settings and retrieve classification results: `PCRpositive` and `PCRoutcome` functions
+
+Once the final choice of settings is made, one can apply the `PCRoutcome` function to the input data frame to produce an output data frame with the classification outcome of each sample. The output data frame can then be used for downstream applications like data management, statistical analysis in `R`, or even printed out for a lab logbook. The returned data frame has three columns: one with the identification symbol of each well in the PCR plate, one with the identification key of each sample, and the last one with the classification outcome of the PCR profile.
+
+`PCRoutcome` is a wrapper function of `PCRpositive`. The latter accepts only a single target size and returns a vector of the sample names that are 'positive' for that fragment size.
+
+## Case study: species identification of malaria mosquitoes
+
+Malaria in sub-Saharan Africa is transmitted by a group of closely related mosquitoes that cannot be distinguished based on morphological traits alone. Species identification, however, is important because some members of this group are negligible vectors of the malarial parasites, whereas other species are major vectors. A PCR assay targeting the IGS sequence in the rDNA has been developed to discriminate between these species (Scott *et al.*, 1993). The expected diagnostic DNA fragments sizes (in bp) resulting from this assay are shown in the **named** vector below^[There are other species in the group that can be discriminated by the PCR assay beyond the three in the *targets* vector shown below; however, these species do not occur in the study area where the samples were collected and are therefore not considered here.]:
+
+```{r targets}
+targets <- c(arabiensis = 315, gambiae = 390, melas = 464)
+```
+
+The vector must be named because the classification algorithm relies on the names in this vector for sample assignment.
+
+We start by looking at the overall outcome of the PCR run with `PCRexplorer`
+
+```{r PCRexplorer-1}
+PCRexplorer(mosquito, targets)
+```
+
+In this plot individual fragment 'bands' are shown as red points in the scattergram relating each fragment's size with its concentration. The blue vertical lines identify the diagnostic fragments size.
+
+The linear scale in the plot coordinates can make it difficult to see all the details in the figure. One solution is to apply a logarithmic scale to either the x-axis, the y-axis, or both.
+
+```{r PCRexplorer-2}
+PCRexplorer(mosquito, targets, logx = TRUE)
+PCRexplorer(mosquito, targets, logy = TRUE)
+PCRexplorer(mosquito, targets, logx = TRUE, logy = TRUE)
+```
+
+One can also focus the attention on a particular range of fragment sizes with the argument `xlimits`. For example it is useful to zoom in over the range of values on the x-axis covering the diagnostic sizes.
+
+```{r PCRexplorer-3}
+PCRexplorer(mosquito, targets, xlimits = c(300,500), logy = TRUE)
+```
+
+From this view of the plot one can see that there are no points falling on or close to the diagnostic size of the third species in `targets` (i.e. *melas*, which has a diagnostic target size of 464 bp). On the other hand, most of the points are close to the diagnostic size of the second species *gambiae*, and some are on or close to the diagnostic size of the first species *arabiensis*. However, one must remember that the points in this plot pertain to **all samples confounded**. Therefore, let's see how each point is related to the other ones in the plot with the `join` argument.
+
+```{r PCRexplorer-4}
+PCRexplorer(mosquito, targets, xlimits = c(300,500), logy = TRUE, join = TRUE)
+```
+
+The fragments pertaining to the "positive control" sample, i.e. template rDNA that is known *a priori* to be of a certain species (*gambiae* in this case), can be highlighted by specifying its sample name with the `control` argument.
+
+```{r PCRexplorer-5}
+PCRexplorer(mosquito, targets, xlimits = c(300,500), logy = TRUE, join = TRUE, control = "CTR")
+```
+
+Importantly, here one can see that many 'bands' (points) close to the diagnostic size for *gambiae* occur in the same samples where there are also 'bands' close to the diagnostic size of *arabiensis* (and *vice versa*), although **at contrasting concentrations**. In our case this is true also for the positive control, which we know *a priori* is a *gambiae*. From this observation, it becomes plausible that fragments whose concentration is below 0.05 ng/µL represent spurious 'parasitic bands'. This suggests that a reasonable value for the `threshold` argument could be 0.05.
+
+```{r threshold}
+threshold <- 0.05
+```
+
+Let's zoom in now even further over the diagnostic sizes of *arabiensis* and *gambiae* to choose the tolerance range.
+
+```{r PCRexplorer-6}
+PCRexplorer(mosquito, targets, xlimits = c(300,400), logy = TRUE, join = TRUE)
+```
+
+All the points that are close to the target sizes lie inside a window of ±10 bp. We can confirm this by specifying the tolerance and threshold arguments to see which points fall in the windows defining a "positive" outcome.
+
+```{r PCRexplorer-7}
+tolerance <- c(10,10)
+PCRexplorer(mosquito, targets, tolerance, threshold, xlimits = c(300,400), logy = TRUE, join = TRUE, control = "CTR")
+```
+
+All the points lying inside the blue windows are considered positive outcomes according to the current settings. It is apparent that the tolerance interval to the left of the target size can be set to zero, as the distribution of sample fragments is asymmetric, all of them occurring to the right side of the target size.
+
+```{r PCRexplorer-8}
+tolerance <- c(0,10)
+PCRexplorer(mosquito, targets, tolerance, threshold, xlimits = c(300,400), logy = TRUE, join = TRUE, control = "CTR")
+```
+
+Let's see which samples are classified as *gambiae* with this choice of settings (those with red 'bands' below).
+
+```{r PCRpherogram-gambiae, fig.dim = c(7.5, 8)}
+PCRpherogram(mosquito, target_size = targets[2], tolerance, threshold)
+```
+
+Samples lacking red 'bands' are "negative" for *gambiae*. Then, let's look which samples are classified as *arabiensis*.
+
+```{r PCRpherogram-arabiensis, fig.dim = c(7.5, 8)}
+PCRpherogram(mosquito, target_size = targets[1], tolerance, threshold)
+```
+
+It is noteworthy that sample "SN20-02385" in microwell P01 has been classified as *arabiensis* although the concentration of the diagnostic fragment for this species is similar to that of *gambiae*---and quite low indeed, rendering less plausible the choice of *arabiensis* as a classification outcome. We may decide, therefore, to increase the threshold parameter in order to take an agnostic stance concerning this sample.
+
+Alternatively, if we are happy with this choice of settings, we can produce the final classification of all samples.
+
+```{r PCRoutcome}
+PCRoutcome(mosquito, targets, tolerance, threshold)
+```
+
+Many samples in the data frame are not classified under either *arabiensis* or *gambiae* (`<NA>`s in the table), i.e. they are "negative" samples which may need to be repeated.
+
+Finally, we can select only the samples pertaining to one species, for example *arabiensis*.
+
+```{r arabiensis}
+PCRpositive(mosquito, target_size = targets[1], tolerance, threshold)
+```
+
+### References
+
+Scott, J. A., Brogdon, W. G., and Collins, F. H. (1993). Identification of single specimens of the *Anopheles gambiae* complex by the Polymerase Chain Reaction. *The American Journal of Tropical Medicine and Hygiene*, **49(4)**:520–529.
