@@ -6,7 +6,7 @@ Electrophoresis devices based on microfluidics technology can simplify and scale
 
 `PCRprofilR` functions depend on the `tidyverse`, therefore packages `magrittr`, `tibble`, `tidyr`, `dplyr`, and `ggplot2` should be installed in your system.
 
-`PCRprofilR` is not on CRAN, so to install it from GitHub use the commands:
+`PCRprofilR` is not on CRAN for now, so to install it from GitHub use the commands:
 
 `install.packages("devtools") # if you have not installed "devtools" package`
 
@@ -17,3 +17,5 @@ or
 `install.packages("githubinstall") # if you have not installed "githubinstall" package`
 
 `githubinstall::githubinstall("PCRprofilR")`
+
+`PCRprofilR` is still under development and beta testing. File an issue if you find a bug.
