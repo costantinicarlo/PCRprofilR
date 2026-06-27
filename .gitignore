@@ -1,8 +1,18 @@
-.Rproj.user
-.Rproj
+# RStudio and R session files
+.Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
-inst/doc
+
+# R package build/check artifacts
+/*.Rcheck/
+/*.tar.gz
+/inst/doc/
 /doc/
 /Meta/
+
+# Local editor/workspace files
+*.code-workspace
+
+# OS-specific clutter
+.DS_Store
