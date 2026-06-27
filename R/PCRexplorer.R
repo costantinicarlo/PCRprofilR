@@ -44,7 +44,7 @@ PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx =
   }
 
   # check that both the tolerance and threshold arguments are not NULL, if one of them is given
-  if (!is.null(tolerance) | !is.null(threshold)) {
+  if (!is.null(tolerance) || !is.null(threshold)) {
     stopifnot("the tolerance and threshold arguments must be both given" = !is.null(tolerance) & !is.null(threshold))
   }
 
@@ -61,7 +61,7 @@ PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx =
     stopifnot("the control argument must be an atomic string" = is.character(control) & length(control) == 1)
   }
 
-  if (!is.null(tolerance) & !is.null(threshold)) {
+  if (!is.null(tolerance) && !is.null(threshold)) {
     tiles <- data.frame(target = targets) %>%
       dplyr::mutate(
         xmin_ = .data$target - tolerance[1L],
@@ -76,7 +76,7 @@ PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx =
     ggplot2::labs(x = "Fragment Size (bp)", y = "Conc. (ng/uL)") +
     ggplot2::theme_linedraw()
 
-  if (!is.null(tolerance) & !is.null(threshold)) {
+  if (!is.null(tolerance) && !is.null(threshold)) {
     p <- p + ggplot2::geom_rect(
       data = tiles,
       ggplot2::aes(xmin = .data$xmin_, xmax = .data$xmax_, ymin = .data$ymin_, ymax = .data$ymax_), fill = "lightblue", alpha = .5

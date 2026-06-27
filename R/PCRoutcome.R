@@ -38,15 +38,15 @@ PCRoutcome <- function(dat, targets, tolerance, threshold) {
 
   dplyr::left_join(
     x = dat %>%
-      dplyr::select(.data$WellID, .data$SampleID) %>%
+      dplyr::select(dplyr::all_of(c("WellID", "SampleID"))) %>%
       unique(),
     y = lapply(
       targets,
       function(x) PCRpositive(dat, target_size = x, tolerance = tolerance, threshold = threshold)
     ) %>%
       tibble::enframe("Outcome", "SampleID") %>%
-      tidyr::unnest(cols = .data$SampleID) %>%
-      dplyr::relocate(.data$SampleID, .data$Outcome),
+      tidyr::unnest(cols = dplyr::all_of("SampleID")) %>%
+      dplyr::relocate(dplyr::all_of(c("SampleID", "Outcome"))),
     by = "SampleID"
   )
 }
