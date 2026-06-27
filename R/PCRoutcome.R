@@ -15,7 +15,6 @@
 #' in more than a single category. This may have biological significance or not at all, and should be checked a posteriori.
 #' Samples that cannot be assigned to a category return NA.
 #' @family related functions
-#' @importFrom rlang .data
 #' @examples
 #' # load the data
 #' data(mosquito)
@@ -37,15 +36,15 @@ PCRoutcome <- function(dat, targets, tolerance, threshold) {
   .assert_nonnegative_numeric_scalar(threshold, "threshold")
 
   dplyr::left_join(
-    x = dat %>%
-      dplyr::select(dplyr::all_of(c("WellID", "SampleID"))) %>%
+    x = dat |>
+      dplyr::select(dplyr::all_of(c("WellID", "SampleID"))) |>
       unique(),
     y = lapply(
       targets,
       function(x) PCRpositive(dat, target_size = x, tolerance = tolerance, threshold = threshold)
-    ) %>%
-      tibble::enframe("Outcome", "SampleID") %>%
-      tidyr::unnest(cols = dplyr::all_of("SampleID")) %>%
+    ) |>
+      tibble::enframe("Outcome", "SampleID") |>
+      tidyr::unnest(cols = dplyr::all_of("SampleID")) |>
       dplyr::relocate(dplyr::all_of(c("SampleID", "Outcome"))),
     by = "SampleID"
   )

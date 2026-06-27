@@ -10,7 +10,6 @@
 #' whose color depends on the classification outcome: bars matching the classification criteria, shown in the plot title, are highlighted
 #' in red, whereas 'parasite bands' are shown in blue (#F8766D and #619CFF, respectively, \pkg{ggplot2} default colors). The sample identifier name is shown
 #' on the top left corner of each 'pherogram'.
-#' @importFrom rlang .data
 #' @examples
 #' # load the data
 #' data(mosquito)
@@ -26,17 +25,21 @@ PCRpherogram <- function(dat, target_size, tolerance, threshold) {
 
   r <- c(target_size - tolerance[1L], target_size + tolerance[2L])
 
-  ggplot2::ggplot(dat %>%
-    dplyr::mutate(
-      outcome = ifelse(.data$Conc >= threshold & inside.range(.data$Size, r), "a_positive", "b_negative"),
-      rrow = stringr::str_extract(.data$WellID, "[A-Z]"),
-      ccol = stringr::str_extract(.data$WellID, "[0-9]+")
-    )) +
+  plot_dat <- dplyr::mutate(
+    dat,
+    outcome = ifelse(dat$Conc >= threshold & inside.range(dat$Size, r), "a_positive", "b_negative"),
+    rrow = stringr::str_extract(dat$WellID, "[A-Z]"),
+    ccol = stringr::str_extract(dat$WellID, "[0-9]+"),
+    alpha_col = (1 - ((max(dat$Conc, na.rm = TRUE) - dat$Conc) / 100))
+  )
+
+  ggplot2::ggplot(plot_dat) +
     ggplot2::geom_vline(ggplot2::aes(xintercept = target_size), alpha = .1) +
-    ggplot2::geom_text(ggplot2::aes(x = 0, y = 5, label = .data$SampleID),
+    ggplot2::geom_text(ggplot2::aes_string(label = "SampleID"),
+      x = 0, y = 5,
       hjust = "left", vjust = "top", size = 3
     ) +
-    ggplot2::geom_col(ggplot2::aes(x = .data$Size, y = .data$Conc, col = .data$outcome, alpha = (1 - ((max(.data$Conc, na.rm = TRUE) - .data$Conc) / 100))), show.legend = FALSE) +
+    ggplot2::geom_col(ggplot2::aes_string(x = "Size", y = "Conc", col = "outcome", alpha = "alpha_col"), show.legend = FALSE) +
     ggplot2::ggtitle(paste("Target Amplicon Size =", target_size, "bp *** Tolerance =", r[1L], "-", r[2L], " bp *** Threshold =", threshold, "ng/uL")) +
     ggplot2::scale_x_continuous(trans = "log2") +
     ggplot2::scale_y_continuous(trans = "sqrt") +

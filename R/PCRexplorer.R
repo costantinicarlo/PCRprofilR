@@ -14,7 +14,6 @@
 #' In order to make an informed choice for the tolerance and threshold settings, it is useful to visualise in a single plot the full range
 #' of fragment sizes and concentrations returned by a PCR run, as well as their mutual relationships. For specific examples about how to
 #' interpret and make use of this plot, see the package vignette.
-#' @importFrom rlang .data
 #' @examples
 #' # load the data
 #' data(mosquito)
@@ -62,16 +61,16 @@ PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx =
   }
 
   if (!is.null(tolerance) && !is.null(threshold)) {
-    tiles <- data.frame(target = targets) %>%
-      dplyr::mutate(
-        xmin_ = .data$target - tolerance[1L],
-        xmax_ = .data$target + tolerance[2L],
-        ymin_ = threshold,
-        ymax_ = max(dat$Conc, na.rm = TRUE)
-      )
+    tiles <- data.frame(
+      target = targets,
+      xmin_ = targets - tolerance[1L],
+      xmax_ = targets + tolerance[2L],
+      ymin_ = threshold,
+      ymax_ = max(dat$Conc, na.rm = TRUE)
+    )
   }
 
-  p <- ggplot2::ggplot(dat %>% dplyr::filter(!is.na(.data$Size))) +
+  p <- ggplot2::ggplot(dat[!is.na(dat$Size), , drop = FALSE]) +
     ggplot2::geom_vline(xintercept = targets, col = "blue") +
     ggplot2::labs(x = "Fragment Size (bp)", y = "Conc. (ng/uL)") +
     ggplot2::theme_linedraw()
@@ -79,22 +78,22 @@ PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx =
   if (!is.null(tolerance) && !is.null(threshold)) {
     p <- p + ggplot2::geom_rect(
       data = tiles,
-      ggplot2::aes(xmin = .data$xmin_, xmax = .data$xmax_, ymin = .data$ymin_, ymax = .data$ymax_), fill = "lightblue", alpha = .5
+      ggplot2::aes_string(xmin = "xmin_", xmax = "xmax_", ymin = "ymin_", ymax = "ymax_"), fill = "lightblue", alpha = .5
     )
   }
 
-  p <- p + ggplot2::geom_point(ggplot2::aes(.data$Size, .data$Conc), size = 4, col = "red", alpha = .3)
+  p <- p + ggplot2::geom_point(ggplot2::aes_string(x = "Size", y = "Conc"), size = 4, col = "red", alpha = .3)
 
   if (logx) p <- p + ggplot2::scale_x_log10()
   if (logy) p <- p + ggplot2::scale_y_log10()
 
   if (!is.null(xlimits)) p <- p + ggplot2::xlim(c(xlimits[1], xlimits[2]))
 
-  if (join) p <- p + ggplot2::geom_line(ggplot2::aes(.data$Size, .data$Conc, group = .data$SampleID), col = "orange", lwd = .75, lty = 3)
+  if (join) p <- p + ggplot2::geom_line(ggplot2::aes_string(x = "Size", y = "Conc", group = "SampleID"), col = "orange", lwd = .75, lty = 3)
   if (!is.null(control)) {
     p <- p + ggplot2::geom_line(
-      data = dat %>% dplyr::filter(.data$SampleID == {{ control }}),
-      ggplot2::aes(.data$Size, .data$Conc, group = .data$SampleID), lwd = .75, lty = 2
+      data = dat[dat$SampleID == control, , drop = FALSE],
+      ggplot2::aes_string(x = "Size", y = "Conc", group = "SampleID"), lwd = .75, lty = 2
     )
   }
 

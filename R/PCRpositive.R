@@ -25,7 +25,6 @@
 #' At present the target fragment size argument needs a single value, hence the function does not consider the case when there is more than one
 #' diagnostic amplicon.
 #' @family related functions
-#' @importFrom rlang .data
 #' @examples
 #' # load the data
 #' data(mosquito)
@@ -48,16 +47,19 @@ PCRpositive <- function(dat, target_size, tolerance, threshold) {
 
   r <- c(target_size - tolerance[1L], target_size + tolerance[2L])
 
-  out <- dat %>%
-    dplyr::filter(is.numeric(.data$Size)) %>%
-    dplyr::mutate(positive = .data$Conc >= threshold & inside.range(.data$Size, r))
+  if (!is.numeric(dat$Size)) {
+    return(NULL)
+  }
+
+  out <- dat |>
+    dplyr::mutate(positive = dat$Conc >= threshold & inside.range(dat$Size, r))
 
   if (TRUE %in% out$positive) {
-    out %>%
-      dplyr::filter(.data$positive == TRUE) %>%
-      dplyr::pull(.data$SampleID) %>%
-      unique() %>%
-      as.character() %>%
+    out |>
+      dplyr::filter(out$positive == TRUE) |>
+      dplyr::pull("SampleID") |>
+      unique() |>
+      as.character() |>
       sort()
   } else {
     NULL
