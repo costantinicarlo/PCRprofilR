@@ -31,30 +31,20 @@
 #' data(mosquito)
 #'
 #' # detect samples with a target amplicon size of 390 ± 10 bp and 0.2 ng/uL concentration
-#' PCRpositive(mosquito, 390, c(10,10), 0.2)
+#' PCRpositive(mosquito, 390, c(10, 10), 0.2)
 #'
 #' # the tolerance around the target size can be asymmetric
-#' PCRpositive(mosquito, 390, c(0,10), 0.2)
+#' PCRpositive(mosquito, 390, c(0, 10), 0.2)
 #'
 #' # another target size will obviously return a different vector of samples
-#' PCRpositive(mosquito, 315, c(0,10), 0.2)
+#' PCRpositive(mosquito, 315, c(0, 10), 0.2)
 #'
 PCRpositive <- function(dat, target_size, tolerance, threshold) {
-
-  # check dat is a data frame
-  stopifnot("the dat argument must be a data frame" = class(dat) %in% c("data.frame", "tbl", "tbl_df", "spec_tbl_df"))
-
-  # check dat header names
-  stopifnot("column names in input data frame must match 'SampleID', 'Size', and 'Conc'" = c("SampleID", "Size", "Conc") %in% names(dat))
-
-  # check target_size vector has one positive numeric element
-  stopifnot("the target_size argument must be a positive numeric scalar" = is.numeric(target_size) & length(target_size) == 1 & target_size > 0)
-
-  # check tolerance vector has two positive numeric elements
-  stopifnot("the tolerance argument must be a numeric vector of two values greater or equal to zero" = is.numeric(tolerance) & length(tolerance) == 2 & tolerance[1L] >= 0 & tolerance[2L] >= 0)
-
-  # check threshold vector has one positive numeric element
-  stopifnot("the threshold argument must be a numeric scalar greater or equal to zero" = is.numeric(threshold) & length(threshold) == 1 & threshold >= 0)
+  .assert_dat(dat)
+  .assert_required_cols(dat, c("SampleID", "Size", "Conc"), "column names in input data frame must match 'SampleID', 'Size', and 'Conc'")
+  .assert_positive_numeric_scalar(target_size, "target_size")
+  .assert_tolerance(tolerance, "the tolerance argument must be a numeric vector of two values greater or equal to zero")
+  .assert_nonnegative_numeric_scalar(threshold, "threshold")
 
   r <- c(target_size - tolerance[1L], target_size + tolerance[2L])
 
@@ -62,14 +52,14 @@ PCRpositive <- function(dat, target_size, tolerance, threshold) {
     dplyr::filter(is.numeric(.data$Size)) %>%
     dplyr::mutate(positive = .data$Conc >= threshold & inside.range(.data$Size, r))
 
-  if(TRUE %in% out$positive) {
+  if (TRUE %in% out$positive) {
     out %>%
       dplyr::filter(.data$positive == TRUE) %>%
       dplyr::pull(.data$SampleID) %>%
       unique() %>%
       as.character() %>%
       sort()
+  } else {
+    NULL
   }
-  else NULL
-
 }

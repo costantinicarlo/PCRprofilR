@@ -21,30 +21,26 @@
 #'
 #' # parameter settings
 #' targets <- c(arabiensis = 315, gambiae = 390, melas = 464)
-#' tolerance <- c(0,10)
+#' tolerance <- c(0, 10)
 #' threshold <- 0.05
 #'
 #' PCRexplorer(mosquito, targets, tolerance, threshold, logx = TRUE, logy = TRUE, join = TRUE, control = "CTR")
 #'
 PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx = FALSE, logy = FALSE, xlimits = NULL, join = FALSE, control = NULL) {
-
-  # check dat is a data frame
-  stopifnot("the dat argument must be a data frame" = class(dat) %in% c("data.frame", "tbl", "tbl_df", "spec_tbl_df"))
-
-  # check dat header names
-  stopifnot("column names in input data frame must match 'SampleID', 'Size', and 'Conc'" = c("SampleID", "Size", "Conc") %in% names(dat))
+  .assert_dat(dat)
+  .assert_required_cols(dat, c("SampleID", "Size", "Conc"), "column names in input data frame must match 'SampleID', 'Size', and 'Conc'")
 
   # check targets is a vector with positive numeric elements
   stopifnot("the targets argument must be a numeric vector of positive values" = is.numeric(targets) & targets > 0)
 
   # check tolerance vector has two positive numeric elements
   if (!is.null(tolerance)) {
-    stopifnot("the tolerance argument must be a numeric vector of two values greater than or equal to zero" = is.numeric(tolerance) & length(tolerance) == 2 & tolerance[1L] >= 0 & tolerance[2L] >= 0)
+    .assert_tolerance(tolerance, "the tolerance argument must be a numeric vector of two values greater than or equal to zero")
   }
 
   # check threshold vector has one positive numeric element
   if (!is.null(threshold)) {
-    stopifnot("the threshold argument must be a numeric scalar greater or equal to zero" = is.numeric(threshold) & length(threshold) == 1 & threshold >= 0)
+    .assert_nonnegative_numeric_scalar(threshold, "threshold")
   }
 
   # check that both the tolerance and threshold arguments are not NULL, if one of them is given
@@ -95,8 +91,12 @@ PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx =
   if (!is.null(xlimits)) p <- p + ggplot2::xlim(c(xlimits[1], xlimits[2]))
 
   if (join) p <- p + ggplot2::geom_line(ggplot2::aes(.data$Size, .data$Conc, group = .data$SampleID), col = "orange", lwd = .75, lty = 3)
-  if (!is.null(control)) p <- p + ggplot2::geom_line(data = dat %>% dplyr::filter(.data$SampleID == {{ control }}),
-                                                     ggplot2::aes(.data$Size, .data$Conc, group = .data$SampleID), lwd = .75, lty = 2)
+  if (!is.null(control)) {
+    p <- p + ggplot2::geom_line(
+      data = dat %>% dplyr::filter(.data$SampleID == {{ control }}),
+      ggplot2::aes(.data$Size, .data$Conc, group = .data$SampleID), lwd = .75, lty = 2
+    )
+  }
 
   return(p)
 }

@@ -21,42 +21,32 @@
 #' data(mosquito)
 #'
 #' # define a named vector of classification sizes (categories are species names in this case)
-#' targets <-  c(arabiensis = 315, gambiae = 390, melas = 464)
+#' targets <- c(arabiensis = 315, gambiae = 390, melas = 464)
 #'
 #' # classify samples with a tolerance of ±10 bp and 0.2 ng/uL concentration
-#' head(PCRoutcome(mosquito, targets, c(10,10), 0.2), head = 10L)
+#' head(PCRoutcome(mosquito, targets, c(10, 10), 0.2), head = 10L)
 #'
 #' # the tolerance around the target size can be asymmetric
-#' head(PCRoutcome(mosquito, targets, c(0,10), 0.2), head = 10L)
+#' head(PCRoutcome(mosquito, targets, c(0, 10), 0.2), head = 10L)
 #'
 PCRoutcome <- function(dat, targets, tolerance, threshold) {
-
-  # check dat is a data frame
-  stopifnot("the dat argument must be a data frame" = class(dat) %in% c("data.frame", "tbl", "tbl_df", "spec_tbl_df"))
-
-  # check dat header names
-  stopifnot("column names in input data frame must match 'WellID', 'SampleID', 'Size', and 'Conc'" = c("WellID", "SampleID", "Size", "Conc") %in% names(dat))
-
-  # check targets is a named vector with positive numeric elements
-  stopifnot("the targets argument must be a named numeric vector of positive values" = is.numeric(targets) & !is.null(attributes(targets)) & targets > 0)
-
-  # check tolerance vector has two positive numeric elements
-  stopifnot("the tolerance argument must be a numeric vector of two values greater or equal to zero" = is.numeric(tolerance) & length(tolerance) == 2 & tolerance[1L] >= 0 & tolerance[2L] >= 0)
-
-  # check threshold vector has one positive numeric element
-  stopifnot("the threshold argument must be a numeric scalar greater or equal to zero" = is.numeric(threshold) & length(threshold) == 1 & threshold >= 0)
+  .assert_dat(dat)
+  .assert_required_cols(dat, c("WellID", "SampleID", "Size", "Conc"), "column names in input data frame must match 'WellID', 'SampleID', 'Size', and 'Conc'")
+  .assert_targets(targets)
+  .assert_tolerance(tolerance, "the tolerance argument must be a numeric vector of two values greater or equal to zero")
+  .assert_nonnegative_numeric_scalar(threshold, "threshold")
 
   dplyr::left_join(
     x = dat %>%
       dplyr::select(.data$WellID, .data$SampleID) %>%
       unique(),
-    y = lapply(targets,
-               function(x) PCRpositive(dat, target_size = x, tolerance = tolerance, threshold = threshold)
+    y = lapply(
+      targets,
+      function(x) PCRpositive(dat, target_size = x, tolerance = tolerance, threshold = threshold)
     ) %>%
       tibble::enframe("Outcome", "SampleID") %>%
       tidyr::unnest(cols = .data$SampleID) %>%
       dplyr::relocate(.data$SampleID, .data$Outcome),
     by = "SampleID"
   )
-
 }

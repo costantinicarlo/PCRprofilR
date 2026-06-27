@@ -15,24 +15,14 @@
 #' # load the data
 #' data(mosquito)
 #'
-#' PCRpherogram(mosquito, target_size = 390, tolerance = c(0,10), threshold = 0.05)
+#' PCRpherogram(mosquito, target_size = 390, tolerance = c(0, 10), threshold = 0.05)
 #'
 PCRpherogram <- function(dat, target_size, tolerance, threshold) {
-
-  # check dat is a data frame
-  stopifnot("the dat argument must be a data frame" = class(dat) %in% c("data.frame", "tbl", "tbl_df", "spec_tbl_df"))
-
-  # check dat header names
-  stopifnot("column names in input data frame must match 'SampleID', 'Size', and 'Conc'" = c("SampleID", "Size", "Conc") %in% names(dat))
-
-  # check target_size vector has one positive numeric element
-  stopifnot("the target_size argument must be a positive numeric scalar" = is.numeric(target_size) & length(target_size) == 1 & target_size > 0)
-
-  # check tolerance vector has two positive numeric elements
-  stopifnot("the tolerance argument must be a numeric vector of two values greater or equal to zero" = is.numeric(tolerance) & length(tolerance) == 2 & tolerance[1L] >= 0 & tolerance[2L] >= 0)
-
-  # check threshold vector has one positive numeric element
-  stopifnot("the threshold argument must be a numeric scalar greater or equal to zero" = is.numeric(threshold) & length(threshold) == 1 & threshold >= 0)
+  .assert_dat(dat)
+  .assert_required_cols(dat, c("SampleID", "Size", "Conc"), "column names in input data frame must match 'SampleID', 'Size', and 'Conc'")
+  .assert_positive_numeric_scalar(target_size, "target_size")
+  .assert_tolerance(tolerance, "the tolerance argument must be a numeric vector of two values greater or equal to zero")
+  .assert_nonnegative_numeric_scalar(threshold, "threshold")
 
   r <- c(target_size - tolerance[1L], target_size + tolerance[2L])
 
