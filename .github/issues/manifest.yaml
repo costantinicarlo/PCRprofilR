@@ -23,7 +23,8 @@ execution:
 stages:
   - id: stage-0.2
     tracking_file: .github/issues/stage-0.2/TRACKING.md
-    status: in_progress
+    status: blocked
+    blocked_reason: ci_green gate requires GitHub Actions run confirmation
     completion_gates:
       - all_stage_issues_closed_or_deferred_with_rationale
       - ci_green
