@@ -92,7 +92,7 @@ stages:
           - S03-02
       - id: S04-02
         file: .github/issues/stage-0.4/02-pcr-sample-calls-deterministic-engine.md
-        status: open
+        status: closed
         depends_on:
           - S04-01
       - id: S04-03

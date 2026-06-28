@@ -10,3 +10,4 @@
 - Added internal canonical `pcr_assay` constructor and validation tests for explicit assay specifications.
 - Added `normalize_pcr_peaks()` with configurable source-column mapping into canonical `pcr_peaks` format.
 - Added `pcr_peak_calls()` evidence-table generator linking canonical peaks to assay targets.
+- Added `pcr_sample_calls()` deterministic sample-level aggregation from peak evidence.
