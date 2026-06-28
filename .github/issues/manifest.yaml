@@ -159,7 +159,7 @@ stages:
 
   - id: stage-0.7
     tracking_file: .github/issues/stage-0.7/TRACKING.md
-    status: open
+    status: completed
     completion_gates:
       - package_build_check_hygiene_resolved_or_documented
       - validators_and_constructors_have_consistent_contracts
@@ -206,7 +206,7 @@ stages:
           - S06-03
       - id: S07-07
         file: .github/issues/stage-0.7/07-defer-advanced-layers-contract.md
-        status: open
+        status: closed
         depends_on:
           - S07-01
           - S07-06

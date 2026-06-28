@@ -9,7 +9,7 @@ Checklist:
 - [x] 04-qc-able-malformed-input-contract.md
 - [x] 05-operational-rule-group-engine.md
 - [x] 06-plots-consume-classified-objects.md
-- [ ] 07-defer-advanced-layers-contract.md
+- [x] 07-defer-advanced-layers-contract.md
 
 Stage completion gates:
 - [x] Package build/check hygiene issues are resolved or intentionally documented
@@ -18,4 +18,4 @@ Stage completion gates:
 - [x] Malformed input handling distinguishes strict object validation from QC-able review data
 - [x] `rule_group` has documented deterministic semantics
 - [x] Plotting workflows consume core evidence/call/QC objects where new behavior is introduced
-- [ ] Docker, Shiny, and Bayesian work remain deferred behind stable core contracts
+- [x] Docker, Shiny, and Bayesian work remain deferred behind stable core contracts

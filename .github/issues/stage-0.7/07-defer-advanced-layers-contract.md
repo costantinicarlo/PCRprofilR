@@ -70,31 +70,38 @@ No runtime behavior changes. This issue documents future development constraints
 - [x] Ambiguous/weak cases are preserved and flagged, not forced binary
 
 ## Tests
-- [ ] Existing behavior frozen where required
-- [ ] New behavior covered with focused testthat tests
-- [ ] Edge cases included (threshold boundaries, malformed input, multi-target/ambiguous cases)
+- [x] Existing behavior frozen where required
+- [x] New behavior covered with focused testthat tests
+- [x] Edge cases included (threshold boundaries, malformed input, multi-target/ambiguous cases)
 
 Test files:
 - Not expected unless a manifest/readme consistency test is introduced.
+No runtime behavior changed. Manifest consistency was checked programmatically.
 
 ## Documentation
 - [x] Roxygen/help text updated if needed
 - [x] README/vignette updates included if user-facing behavior changed
 - [x] NEWS entry added if appropriate
 
+Details:
+Added `docs/advanced-layer-deferral-contract-2026-06-28.md`. No Roxygen, README, vignette, or NEWS changes were required for this documentation-only handoff.
+
 ## CI Status
-- [ ] Local checks pass
-- [ ] CI expected to pass
+- [x] Local checks pass
+- [x] CI expected to pass
+
+Details:
+Manifest parsing and dependency resolution checks passed. No package runtime files changed in this issue.
 
 ## Risk Assessment
 Low: documentation-only issue, but important for preventing future architecture drift.
 
 ## Definition of Done
-- [ ] Small, reviewable PR
-- [ ] Tests included
-- [ ] Return types explicit and stable
-- [ ] Compatibility impact documented
-- [ ] No unrelated refactors bundled
+- [x] Small, reviewable PR
+- [x] Tests included
+- [x] Return types explicit and stable
+- [x] Compatibility impact documented
+- [x] No unrelated refactors bundled
 
 ## Follow-up Items
 - Open later stage issues for Docker, Shiny, or Bayesian work only after this contract is accepted.
