@@ -134,7 +134,7 @@ stages:
 
   - id: stage-0.6
     tracking_file: .github/issues/stage-0.6/TRACKING.md
-    status: in_progress
+    status: completed
     completion_gates:
       - batch_helpers_use_core_objects
       - replicate_summaries_deterministic_and_tested
@@ -153,7 +153,7 @@ stages:
           - S04-04
       - id: S06-03
         file: .github/issues/stage-0.6/03-report-export-helpers.md
-        status: in_progress
+        status: closed
         depends_on:
           - S06-02
 
