@@ -31,6 +31,65 @@ Electrophoretic devices based on microfluidics technology can obviate some these
 
 The steps described below represent a typical workflow of how to use the functions in the `{PCRprofilR}` package.
 
+## Deterministic Core API (stage-0.6)
+
+The package now exposes a curated public API that supports canonical objects and auditable deterministic interpretation.
+
+Public core functions:
+
+- `as_pcr_peaks()`, `as_pcr_assay()`
+- `detect_pcr_peaks()`, `classify_pcr_samples()`
+- `qc_pcr_run()`, `summarize_pcr_replicates()`
+- `run_pcr_batch()`, `report_pcr_calls()`
+
+The legacy wrappers (`PCRpositive`, `PCRoutcome`, `PCRexplorer`, `PCRpherogram`) remain available for backward compatibility.
+
+### Core API quickstart
+
+```{r core-api-quickstart}
+data(mosquito)
+
+# Build canonical-like input from legacy columns for a reproducible example.
+peaks_input <- transform(
+  mosquito,
+  RunID = "run-1",
+  PlateID = "plate-1",
+  PeakID = paste0("peak-", seq_len(nrow(mosquito))),
+  RawFile = "mosquito.csv",
+  Instrument = "labchip"
+)
+
+peaks <- as_pcr_peaks(peaks_input)
+
+assay <- as_pcr_assay(data.frame(
+  assay_id = c("species-assay", "species-assay", "species-assay"),
+  target_id = c("arabiensis", "gambiae", "melas"),
+  expected_size_bp = c(315, 390, 464),
+  lower_size_bp = c(315, 390, 464),
+  upper_size_bp = c(325, 400, 474),
+  min_concentration = c(0.05, 0.05, 0.05),
+  confirm_concentration = c(0.2, 0.2, 0.2),
+  biological_label = c("arabiensis", "gambiae", "melas"),
+  rule_group = c("species", "species", "species"),
+  stringsAsFactors = FALSE
+))
+
+peak_calls <- detect_pcr_peaks(peaks, assay)
+sample_calls <- classify_pcr_samples(peak_calls)
+qc <- qc_pcr_run(peaks, sample_calls)
+
+head(sample_calls[, c("sample_id", "call", "call_state", "threshold_status")])
+head(qc[, c("sample_id", "qc_status", "contamination_candidate")])
+```
+
+Current deterministic `call_state` values include:
+
+- `positive`, `negative`
+- `weak_positive`, `indeterminate_review`, `ambiguous_review`
+- `hybrid_candidate`, `mixed_profile_candidate`
+
+These states preserve uncertainty and review-needed cases rather than forcing all outcomes into binary calls.
+
 ### Step 1. Load the device output file in the `Global Environment`
 
 The output file holding the electrophoresis run data must be first loaded in the `Global Environment` using `R` functions that import text files (e.g. `read_csv` in the `{readr}` package, or the `{base}` function `read.csv`). There are no specific functions in `{PCRprofilR}` for this purpose as the process will depend on idiosyncracies of the output format used by each particular device. In our example dataset we make use of a PerkinElmer LabChip® output file, as shown below.
@@ -170,6 +229,39 @@ Finally, we can select only the samples pertaining to one species, for example *
 
 ```{r arabiensis}
 PCRpositive(mosquito, target_size = targets[1], tolerance, threshold)
+```
+
+## Replicate, batch, and export helpers
+
+Replicate summary is deterministic and based on `call_state` and QC evidence:
+
+```{r replicate-summary}
+replicate_summary <- summarize_pcr_replicates(sample_calls, qc = qc)
+head(replicate_summary)
+```
+
+File-based orchestration and exports are available through:
+
+- `run_pcr_batch(peaks_path, assay_path, output_dir, ...)`
+- `report_pcr_calls(peak_calls, sample_calls, qc, output_dir, ...)`
+
+For vignette portability, these calls are shown but not executed on external files:
+
+```{r batch-export-helpers, eval = FALSE}
+batch_out <- run_pcr_batch(
+  peaks_path = "peaks.csv",
+  assay_path = "assay.csv",
+  output_dir = "out"
+)
+
+report_out <- report_pcr_calls(
+  peak_calls = batch_out$peak_calls,
+  sample_calls = batch_out$sample_calls,
+  qc = batch_out$qc,
+  output_dir = "out/reports",
+  format = "csv",
+  write_summary = TRUE
+)
 ```
 
 ### References

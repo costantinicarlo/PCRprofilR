@@ -1,34 +1,127 @@
-# Introduction
+# PCRprofilR
 
-Electrophoresis devices based on microfluidics technology can simplify and scale up the analysis of nucleic acids in biomolecular applications. Following a run and using specialised software, one can generally retrieve from these devices a text output file (usually in CSV format) containing the fragment size and concentration of the amplicons resulting from PCR amplification of each sample. The functions in the `PCRprofilR` package provide a simple way to visualise and automate the retrieval of the information in this output file for downstream applications. One of these applications is the programmatic classification of DNA/RNA samples returning amplicons that are diagnostic based on their fragment size. This insures the transparency and reproducibility of results of analyses based on this classification.
+## Introduction
 
-# Installation
+PCRprofilR provides deterministic and auditable interpretation of PCR fragment profiles from capillary electrophoresis outputs.
 
-`PCRprofilR` functions depend on the `tidyverse`, therefore packages `magrittr`, `tibble`, `tidyr`, `dplyr`, and `ggplot2` should be installed in your system.
+The package now includes:
 
-`PCRprofilR` is not on CRAN for now, so to install it from GitHub use the commands:
+- legacy wrapper functions for established workflows
+- canonical internal objects for peaks, assay specs, evidence, sample calls, and QC
+- multi-state deterministic interpretation (not only binary positive/negative)
+- replicate summaries
+- batch and export helpers with provenance fields
 
-`install.packages("devtools") # if you have not installed "devtools" package`
+## Installation
 
-`devtools::install_github("carlocostantini/PCRprofilR")`
+PCRprofilR is currently distributed from GitHub.
 
-or
+```r
+install.packages("devtools")
+devtools::install_github("carlocostantini/PCRprofilR")
+```
 
-`install.packages("githubinstall") # if you have not installed "githubinstall" package`
+## Public API (current)
 
-`githubinstall::githubinstall("PCRprofilR")`
+Legacy compatibility wrappers remain available:
 
-`PCRprofilR` is still under development and beta testing. File an issue if you find a bug.
+- PCRpositive
+- PCRoutcome
+- PCRexplorer
+- PCRpherogram
 
-# Lifecycle
+Curated 1.0-facing API:
 
-`PCRprofilR` is in pre-1.0 staged development toward a stable deterministic interpretation core.
+- as_pcr_peaks
+- as_pcr_assay
+- validate_pcr_peaks
+- validate_pcr_assay
+- detect_pcr_peaks
+- classify_pcr_samples
+- qc_pcr_run
+- summarize_pcr_replicates
+- run_pcr_batch
+- report_pcr_calls
 
-Current implementation roadmap (high level):
-- `0.2.x`: baseline tests, validation cleanup, CI stabilization
-- `0.3.x`: canonical peak and assay object contracts
-- `0.4.x`: evidence tables, sample calls, QC objects
-- `0.5.x`: deterministic multi-state interpretation rules
-- `0.6.x`: replicate-aware summaries and batch/report helpers
+## Deterministic Core Workflow
 
-See `NEWS.md` for user-visible changes by stage.
+```r
+library(PCRprofilR)
+
+data(mosquito)
+
+# Build canonical-like input from legacy columns for a reproducible example.
+peaks_input <- transform(
+	mosquito,
+	RunID = "run-1",
+	PlateID = "plate-1",
+	PeakID = paste0("peak-", seq_len(nrow(mosquito))),
+	RawFile = "mosquito.csv",
+	Instrument = "labchip"
+)
+
+peaks <- as_pcr_peaks(peaks_input)
+
+assay <- as_pcr_assay(data.frame(
+	assay_id = c("species-assay", "species-assay", "species-assay"),
+	target_id = c("arabiensis", "gambiae", "melas"),
+	expected_size_bp = c(315, 390, 464),
+	lower_size_bp = c(315, 390, 464),
+	upper_size_bp = c(325, 400, 474),
+	min_concentration = c(0.05, 0.05, 0.05),
+	confirm_concentration = c(0.2, 0.2, 0.2),
+	biological_label = c("arabiensis", "gambiae", "melas"),
+	rule_group = c("species", "species", "species"),
+	stringsAsFactors = FALSE
+))
+
+peak_calls <- detect_pcr_peaks(peaks, assay)
+sample_calls <- classify_pcr_samples(peak_calls)
+qc <- qc_pcr_run(peaks, sample_calls)
+
+head(sample_calls[, c("sample_id", "call", "call_state", "threshold_status")])
+head(qc[, c("sample_id", "qc_status", "contamination_candidate")])
+```
+
+## Multi-State Calls
+
+Current sample-level call_state values include:
+
+- positive
+- negative
+- weak_positive
+- indeterminate_review
+- ambiguous_review
+- hybrid_candidate
+- mixed_profile_candidate
+
+This keeps uncertain profiles explicit and reviewable instead of forcing binary outcomes.
+
+## Batch and Export Helpers
+
+Use run_pcr_batch for file-driven orchestration and report_pcr_calls for reproducible exports with provenance metadata.
+
+```r
+# batch_out <- run_pcr_batch("peaks.csv", "assay.csv", "out/")
+# report_out <- report_pcr_calls(
+#   batch_out$peak_calls,
+#   batch_out$sample_calls,
+#   batch_out$qc,
+#   output_dir = "out/reports",
+#   format = "csv"
+# )
+```
+
+## Lifecycle
+
+PCRprofilR is pre-1.0 and developed in staged increments.
+
+Stages completed so far:
+
+- 0.2: baseline tests, validation cleanup, CI stabilization
+- 0.3: canonical peak and assay object contracts
+- 0.4: evidence tables, sample calls, QC objects
+- 0.5: deterministic multi-state interpretation rules
+- 0.6: replicate summaries and batch/export helper layer
+
+See NEWS.md for user-visible changes and docs/architecture-audit-2026-06-27.md for architecture status.
