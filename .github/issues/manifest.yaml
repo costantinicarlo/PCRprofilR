@@ -1,0 +1,175 @@
+version: 1
+project: PCRprofilR
+updated: 2026-06-28
+
+policies:
+  stage_progression: sequential
+  commit_policy_ref: .github/implementation-version-control-strategy.md
+  agent_prompt_ref: .github/agent-commit-stage-prompt.md
+  issue_template_ref: .github/ISSUE_TEMPLATE/refactor-step.md
+
+execution:
+  next_issue_selection:
+    rule: first_open_with_all_dependencies_resolved
+    skip_deferred: true
+  commit_gates_required:
+    - issue_scope_defined
+    - tests_added_or_updated
+    - affected_tests_pass
+    - return_contract_explicit
+    - compatibility_documented
+    - no_unrelated_diff
+
+stages:
+  - id: stage-0.2
+    tracking_file: .github/issues/stage-0.2/TRACKING.md
+    status: open
+    completion_gates:
+      - all_stage_issues_closed_or_deferred_with_rationale
+      - ci_green
+      - user_visible_changes_documented
+      - no_unresolved_compatibility_ambiguity
+    issues:
+      - id: S02-01
+        file: .github/issues/stage-0.2/01-baseline-tests-pcroutcome.md
+        status: open
+        depends_on: []
+      - id: S02-02
+        file: .github/issues/stage-0.2/02-baseline-tests-visual-functions.md
+        status: open
+        depends_on: []
+      - id: S02-03
+        file: .github/issues/stage-0.2/03-validation-error-consistency.md
+        status: open
+        depends_on: []
+      - id: S02-04
+        file: .github/issues/stage-0.2/04-ci-rcmdcheck-testthat.md
+        status: open
+        depends_on:
+          - S02-01
+          - S02-02
+          - S02-03
+      - id: S02-05
+        file: .github/issues/stage-0.2/05-news-and-lifecycle-scaffold.md
+        status: open
+        depends_on: []
+
+  - id: stage-0.3
+    tracking_file: .github/issues/stage-0.3/TRACKING.md
+    status: blocked
+    blocked_by_stage: stage-0.2
+    completion_gates:
+      - constructors_and_validators_documented
+      - object_contract_tests_passing
+      - wrappers_unchanged_or_documented
+    issues:
+      - id: S03-01
+        file: .github/issues/stage-0.3/01-pcr-peaks-schema-validator.md
+        status: open
+        depends_on: []
+      - id: S03-02
+        file: .github/issues/stage-0.3/02-pcr-assay-schema-validator.md
+        status: open
+        depends_on: []
+      - id: S03-03
+        file: .github/issues/stage-0.3/03-import-column-mapping-normalization.md
+        status: open
+        depends_on:
+          - S03-01
+
+  - id: stage-0.4
+    tracking_file: .github/issues/stage-0.4/TRACKING.md
+    status: blocked
+    blocked_by_stage: stage-0.3
+    completion_gates:
+      - pcr_peak_calls_pcr_sample_calls_pcr_qc_operational
+      - public_api_usable
+      - tests_cover_boundaries_and_malformed_inputs
+    issues:
+      - id: S04-01
+        file: .github/issues/stage-0.4/01-pcr-peak-calls-evidence-table.md
+        status: open
+        depends_on:
+          - S03-01
+          - S03-02
+      - id: S04-02
+        file: .github/issues/stage-0.4/02-pcr-sample-calls-deterministic-engine.md
+        status: open
+        depends_on:
+          - S04-01
+      - id: S04-03
+        file: .github/issues/stage-0.4/03-pcr-qc-machine-readable-flags.md
+        status: open
+        depends_on:
+          - S04-01
+      - id: S04-04
+        file: .github/issues/stage-0.4/04-wrapper-routing-phase-1.md
+        status: open
+        depends_on:
+          - S04-02
+          - S04-03
+
+  - id: stage-0.5
+    tracking_file: .github/issues/stage-0.5/TRACKING.md
+    status: blocked
+    blocked_by_stage: stage-0.4
+    completion_gates:
+      - call_states_include_weak_indeterminate_review
+      - hybrid_mixed_contamination_evidence_backed
+      - ambiguous_cases_preserved
+    issues:
+      - id: S05-01
+        file: .github/issues/stage-0.5/01-three-zone-threshold-logic.md
+        status: open
+        depends_on:
+          - S04-02
+      - id: S05-02
+        file: .github/issues/stage-0.5/02-weak-ambiguous-indeterminate-calls.md
+        status: open
+        depends_on:
+          - S05-01
+      - id: S05-03
+        file: .github/issues/stage-0.5/03-hybrid-mixed-contamination-rules.md
+        status: open
+        depends_on:
+          - S05-02
+          - S04-03
+
+  - id: stage-0.6
+    tracking_file: .github/issues/stage-0.6/TRACKING.md
+    status: blocked
+    blocked_by_stage: stage-0.5
+    completion_gates:
+      - batch_helpers_use_core_objects
+      - replicate_summaries_deterministic_and_tested
+      - exports_preserve_provenance_and_qc
+    issues:
+      - id: S06-01
+        file: .github/issues/stage-0.6/01-replicate-aware-deterministic-summary.md
+        status: open
+        depends_on:
+          - S04-02
+          - S04-03
+      - id: S06-02
+        file: .github/issues/stage-0.6/02-batch-cli-input-output-helpers.md
+        status: open
+        depends_on:
+          - S04-04
+      - id: S06-03
+        file: .github/issues/stage-0.6/03-report-export-helpers.md
+        status: open
+        depends_on:
+          - S06-02
+
+state_values:
+  issue_status:
+    - open
+    - in_progress
+    - blocked
+    - deferred
+    - closed
+  stage_status:
+    - open
+    - in_progress
+    - blocked
+    - completed
