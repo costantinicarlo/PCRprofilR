@@ -16,10 +16,12 @@ test_that("curated public API exports are available", {
 })
 
 test_that("curated public API exports are documented", {
-    doc_lines <- readLines(
-        testthat::test_path("..", "..", "man", "pcr_public_api.Rd"),
-        warn = FALSE
+    doc_path <- testthat::test_path("..", "..", "man", "pcr_public_api.Rd")
+    testthat::skip_if_not(
+        file.exists(doc_path),
+        "Source man files are not included in package build artifacts."
     )
+    doc_lines <- readLines(doc_path, warn = FALSE)
 
     expected_aliases <- paste0("\\alias{", c(
         "as_pcr_peaks",
