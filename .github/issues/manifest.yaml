@@ -40,7 +40,7 @@ stages:
         depends_on: []
       - id: S02-03
         file: .github/issues/stage-0.2/03-validation-error-consistency.md
-        status: open
+        status: closed
         depends_on: []
       - id: S02-04
         file: .github/issues/stage-0.2/04-ci-rcmdcheck-testthat.md
