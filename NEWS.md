@@ -6,3 +6,4 @@
 - Added baseline tests for `PCRexplorer()` and `PCRpherogram()` plotting behavior and argument validation.
 - Standardized validation helper error behavior for clearer, consistent user-facing messages.
 - Added GitHub Actions workflow for `R CMD check`.
+- Added internal canonical `pcr_peaks` constructor and validation tests to start stage-0.3 object contracts.

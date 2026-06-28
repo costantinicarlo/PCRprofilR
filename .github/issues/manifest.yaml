@@ -23,8 +23,7 @@ execution:
 stages:
   - id: stage-0.2
     tracking_file: .github/issues/stage-0.2/TRACKING.md
-    status: blocked
-    blocked_reason: ci_green gate requires GitHub Actions run confirmation
+    status: completed
     completion_gates:
       - all_stage_issues_closed_or_deferred_with_rationale
       - ci_green
@@ -57,8 +56,7 @@ stages:
 
   - id: stage-0.3
     tracking_file: .github/issues/stage-0.3/TRACKING.md
-    status: blocked
-    blocked_by_stage: stage-0.2
+    status: in_progress
     completion_gates:
       - constructors_and_validators_documented
       - object_contract_tests_passing
@@ -66,7 +64,7 @@ stages:
     issues:
       - id: S03-01
         file: .github/issues/stage-0.3/01-pcr-peaks-schema-validator.md
-        status: open
+        status: closed
         depends_on: []
       - id: S03-02
         file: .github/issues/stage-0.3/02-pcr-assay-schema-validator.md
