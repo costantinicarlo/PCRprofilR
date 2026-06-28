@@ -79,23 +79,29 @@ Test files:
 - tests/testthat/test-pcr-qc.R
 
 ## Documentation
-- [ ] Roxygen/help text updated if needed
+- [x] Roxygen/help text updated if needed
 - [ ] README/vignette updates included if user-facing behavior changed
-- [ ] NEWS entry added if appropriate
+- [x] NEWS entry added if appropriate
+
+Details:
+Updated the public API Rd usage for `allow_qc_issues` and added a NEWS entry. README/vignette updates are deferred to the later workflow documentation pass.
 
 ## CI Status
-- [ ] Local checks pass
-- [ ] CI expected to pass
+- [x] Local checks pass
+- [x] CI expected to pass
+
+Details:
+Focused `test-pcr-peaks.R`, `test-import-mapping.R`, and `test-pcr-qc.R` passed. Full suite passed with 200 tests, 0 failures, and 0 warnings. `R CMD build --no-build-vignettes .` passed. Local `R CMD check --no-manual --no-build-vignettes` completed with only the documented vignette warnings caused by skipping vignette builds.
 
 ## Risk Assessment
 Medium: relaxing validation incorrectly could allow bad evidence into calls. Keep strict and reviewable pathways distinct.
 
 ## Definition of Done
-- [ ] Small, reviewable PR
-- [ ] Tests included
-- [ ] Return types explicit and stable
-- [ ] Compatibility impact documented
-- [ ] No unrelated refactors bundled
+- [x] Small, reviewable PR
+- [x] Tests included
+- [x] Return types explicit and stable
+- [x] Compatibility impact documented
+- [x] No unrelated refactors bundled
 
 ## Follow-up Items
 - Feed malformed-input QC flags into reporting and future Shiny review screens.

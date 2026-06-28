@@ -78,3 +78,24 @@ test_that("normalize_pcr_peaks validates mapping names and source columns", {
         "missing source columns"
     )
 })
+
+test_that("as_pcr_peaks review path allows QC-able well issues", {
+    dat <- data.frame(
+        RunID = "run-1",
+        PlateID = "plate-1",
+        WellID = "",
+        SampleID = "S1",
+        PeakID = "peak-1",
+        Size = 390,
+        Conc = 0.25,
+        RawFile = "run.csv",
+        Instrument = "bioanalyzer",
+        stringsAsFactors = FALSE
+    )
+
+    expect_error(as_pcr_peaks(dat), "well_id")
+
+    out <- as_pcr_peaks(dat, allow_qc_issues = TRUE)
+    expect_s3_class(out, "pcr_peaks")
+    expect_identical(out$well_id[[1]], "")
+})

@@ -1,4 +1,4 @@
-normalize_pcr_peaks <- function(dat, mapping = NULL) {
+normalize_pcr_peaks <- function(dat, mapping = NULL, allow_qc_issues = FALSE) {
     if (!inherits(dat, "data.frame")) {
         stop("normalize_pcr_peaks input must be a data frame", call. = FALSE)
     }
@@ -52,5 +52,5 @@ normalize_pcr_peaks <- function(dat, mapping = NULL) {
         instrument = dat[[mapping[["instrument"]]]]
     )
 
-    pcr_peaks(out)
+    pcr_peaks(out, allow_qc_issues = allow_qc_issues)
 }

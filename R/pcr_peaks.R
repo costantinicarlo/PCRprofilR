@@ -10,9 +10,13 @@ pcr_peaks_required_cols <- c(
     "instrument"
 )
 
-validate_pcr_peaks <- function(x) {
+validate_pcr_peaks <- function(x, allow_qc_issues = FALSE) {
     if (!inherits(x, "data.frame")) {
         stop("pcr_peaks input must be a data frame", call. = FALSE)
+    }
+
+    if (!is.logical(allow_qc_issues) || length(allow_qc_issues) != 1L || is.na(allow_qc_issues)) {
+        stop("allow_qc_issues must be a logical scalar", call. = FALSE)
     }
 
     missing_cols <- setdiff(pcr_peaks_required_cols, names(x))
@@ -34,7 +38,7 @@ validate_pcr_peaks <- function(x) {
         stop("pcr_peaks column 'concentration' must be numeric and non-negative", call. = FALSE)
     }
 
-    id_cols <- c("run_id", "plate_id", "well_id", "sample_id", "peak_id", "raw_file", "instrument")
+    id_cols <- c("run_id", "plate_id", "sample_id", "peak_id", "raw_file", "instrument")
     for (col in id_cols) {
         if (!is.character(x[[col]]) || any(is.na(x[[col]])) || any(!nzchar(x[[col]]))) {
             stop(
@@ -44,10 +48,14 @@ validate_pcr_peaks <- function(x) {
         }
     }
 
+    if (!is.character(x$well_id) || (!allow_qc_issues && (any(is.na(x$well_id)) || any(!nzchar(x$well_id))))) {
+        stop("pcr_peaks column 'well_id' must be non-missing, non-empty character values", call. = FALSE)
+    }
+
     invisible(x)
 }
 
-pcr_peaks <- function(dat) {
+pcr_peaks <- function(dat, allow_qc_issues = FALSE) {
     x <- tibble::as_tibble(dat)
 
     id_cols <- c("run_id", "plate_id", "well_id", "sample_id", "peak_id", "raw_file", "instrument")
@@ -55,7 +63,7 @@ pcr_peaks <- function(dat) {
         x[[col]] <- as.character(x[[col]])
     }
 
-    validate_pcr_peaks(x)
+    validate_pcr_peaks(x, allow_qc_issues = allow_qc_issues)
     class(x) <- c("pcr_peaks", class(x))
     x
 }

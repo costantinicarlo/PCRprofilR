@@ -75,3 +75,24 @@ test_that("pcr_peaks coerces factor identifiers to character", {
     expect_type(out$run_id, "character")
     expect_type(out$instrument, "character")
 })
+
+test_that("pcr_peaks keeps strict well validation unless QC issues are allowed", {
+    dat <- data.frame(
+        run_id = "run-1",
+        plate_id = "plate-1",
+        well_id = NA_character_,
+        sample_id = "S1",
+        peak_id = "peak-1",
+        size_bp = 390,
+        concentration = 0.25,
+        raw_file = "run.csv",
+        instrument = "bioanalyzer",
+        stringsAsFactors = FALSE
+    )
+
+    expect_error(PCRprofilR:::pcr_peaks(dat), "well_id")
+
+    out <- PCRprofilR:::pcr_peaks(dat, allow_qc_issues = TRUE)
+    expect_s3_class(out, "pcr_peaks")
+    expect_true(is.na(out$well_id[[1]]))
+})

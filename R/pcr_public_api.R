@@ -1,6 +1,6 @@
 #' @export
-as_pcr_peaks <- function(dat, mapping = NULL) {
-    if (inherits(dat, "pcr_peaks")) {
+as_pcr_peaks <- function(dat, mapping = NULL, allow_qc_issues = FALSE) {
+    if (inherits(dat, "pcr_peaks") && !isTRUE(allow_qc_issues)) {
         return(dat)
     }
 
@@ -9,10 +9,10 @@ as_pcr_peaks <- function(dat, mapping = NULL) {
     }
 
     if (all(pcr_peaks_required_cols %in% names(dat))) {
-        return(pcr_peaks(dat))
+        return(pcr_peaks(dat, allow_qc_issues = allow_qc_issues))
     }
 
-    normalize_pcr_peaks(dat, mapping = mapping)
+    normalize_pcr_peaks(dat, mapping = mapping, allow_qc_issues = allow_qc_issues)
 }
 
 #' @export
@@ -35,8 +35,8 @@ classify_pcr_samples <- function(peak_calls) {
 }
 
 #' @export
-qc_pcr_run <- function(peaks, sample_calls = NULL) {
-    pcr_qc(as_pcr_peaks(peaks), sample_calls = sample_calls)
+qc_pcr_run <- function(peaks, sample_calls = NULL, allow_qc_issues = FALSE) {
+    pcr_qc(as_pcr_peaks(peaks, allow_qc_issues = allow_qc_issues), sample_calls = sample_calls, allow_qc_issues = allow_qc_issues)
 }
 
 #' @export

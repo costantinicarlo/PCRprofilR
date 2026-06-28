@@ -47,9 +47,9 @@
     out
 }
 
-pcr_qc <- function(peaks, sample_calls = NULL) {
+pcr_qc <- function(peaks, sample_calls = NULL, allow_qc_issues = FALSE) {
     if (!inherits(peaks, "pcr_peaks")) {
-        peaks <- pcr_peaks(peaks)
+        peaks <- pcr_peaks(peaks, allow_qc_issues = allow_qc_issues)
     }
 
     peaks_tbl <- tibble::as_tibble(peaks)
@@ -77,6 +77,7 @@ pcr_qc <- function(peaks, sample_calls = NULL) {
     qc <- dplyr::mutate(
         qc,
         has_missing_well_id = is.na(.data$well_id) | !nzchar(.data$well_id),
+        malformed_well_id = !.data$has_missing_well_id & !grepl("^[A-Z]+[0-9]+$", .data$well_id),
         control_sample = !.data$control_role %in% c("sample", "unknown"),
         positive_control = .data$control_role == "positive_control",
         negative_control = .data$control_role == "negative_control",
@@ -131,6 +132,7 @@ pcr_qc <- function(peaks, sample_calls = NULL) {
         qc,
         qc_status = dplyr::case_when(
             .data$has_missing_well_id ~ "fail",
+            .data$malformed_well_id ~ "fail",
             .data$control_failure ~ "fail",
             .data$contamination_candidate ~ "review",
             .data$duplicate_sample_id_in_run ~ "review",

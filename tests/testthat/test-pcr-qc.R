@@ -135,3 +135,33 @@ test_that("pcr_qc rejects unknown explicit control roles", {
 
     expect_error(PCRprofilR:::pcr_qc(peaks), "control_role values")
 })
+
+test_that("pcr_qc flags QC-able missing and malformed well identifiers", {
+    dat <- data.frame(
+        run_id = c("run-1", "run-1"),
+        plate_id = c("plate-1", "plate-1"),
+        well_id = c(NA_character_, "not-a-well"),
+        sample_id = c("S1", "S2"),
+        peak_id = c("peak-1", "peak-2"),
+        size_bp = c(390, 391),
+        concentration = c(0.3, 0.3),
+        raw_file = c("run.csv", "run.csv"),
+        instrument = c("bioanalyzer", "bioanalyzer"),
+        stringsAsFactors = FALSE
+    )
+
+    expect_error(PCRprofilR:::pcr_qc(dat), "well_id")
+
+    qc <- qc_pcr_run(dat, allow_qc_issues = TRUE)
+
+    missing <- qc[is.na(qc$well_id), ]
+    malformed <- qc[qc$well_id == "not-a-well", ]
+
+    expect_true(missing$has_missing_well_id[[1]])
+    expect_false(missing$malformed_well_id[[1]])
+    expect_identical(missing$qc_status[[1]], "fail")
+
+    expect_false(malformed$has_missing_well_id[[1]])
+    expect_true(malformed$malformed_well_id[[1]])
+    expect_identical(malformed$qc_status[[1]], "fail")
+})

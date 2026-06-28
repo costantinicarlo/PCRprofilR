@@ -11,11 +11,11 @@
 \alias{report_pcr_calls}
 \title{Curated helpers for PCR profile interpretation workflows}
 \usage{
-as_pcr_peaks(dat, mapping = NULL)
+as_pcr_peaks(dat, mapping = NULL, allow_qc_issues = FALSE)
 
 as_pcr_assay(dat)
 
-validate_pcr_peaks(x)
+validate_pcr_peaks(x, allow_qc_issues = FALSE)
 
 validate_pcr_assay(x)
 
@@ -23,7 +23,7 @@ detect_pcr_peaks(peaks, assay)
 
 classify_pcr_samples(peak_calls)
 
-qc_pcr_run(peaks, sample_calls = NULL)
+qc_pcr_run(peaks, sample_calls = NULL, allow_qc_issues = FALSE)
 
 summarize_pcr_replicates(sample_calls, qc = NULL, replicate_keys = c("sample_id"))
 
@@ -45,6 +45,8 @@ report_pcr_calls(
 \item{x}{A candidate canonical table validated by \code{validate_pcr_peaks()} or \code{validate_pcr_assay()}.}
 
 \item{mapping}{Optional named mapping used by \code{as_pcr_peaks()} to translate source column names into the canonical peak columns.}
+
+\item{allow_qc_issues}{Logical flag controlling whether selected QC-able peak-table issues, currently missing or malformed well identifiers, are allowed through the review pathway so they can be represented as machine-readable QC flags. The default \code{FALSE} keeps strict canonical validation.}
 
 \item{peaks}{Canonical or raw peak data passed to \code{detect_pcr_peaks()} or \code{qc_pcr_run()}.}
 

@@ -22,3 +22,4 @@
 - Curated a public 1.0-facing API surface by exporting stable aliases (`as_pcr_*`, `detect_pcr_peaks()`, `classify_pcr_samples()`, `qc_pcr_run()`, `summarize_pcr_replicates()`, `run_pcr_batch()`, `report_pcr_calls()`) and schema validators.
 - Declared `R (>= 4.1.0)` to match native pipe usage in package source files and tightened source-build ignores for repository-only and generated vignette artifacts.
 - Added explicit QC control-role semantics for positive controls, negative controls, no-template controls, and blanks while retaining legacy sample-name inference as a fallback.
+- Added an explicit `allow_qc_issues` review path so missing or malformed well identifiers can be retained as machine-readable QC failures while strict canonical validation remains the default.
