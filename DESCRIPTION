@@ -1,7 +1,7 @@
 Package: PCRprofilR
 Type: Package
 Title: Classification of Nucleic Acids Fragments
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     person("Carlo", "Costantini", , "carlo.costantini@ird.fr", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-1016-129X"))
