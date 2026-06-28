@@ -1,6 +1,6 @@
 <p align="center">
   <img src="assets/PCRprofilR_logo_hex.png"
-       alt="panpreposterous logo"
+       alt="PCRprofilR logo"
        width="420">
 </p>
 
@@ -186,6 +186,7 @@ See:
 
 - `NEWS.md` for user-visible changes.
 - `vignettes/PCRprofilR.Rmd` for the source tutorial.
+- `docs/project-hygiene-audit-2026-06-28.md` for the current repository consistency audit.
 - `docs/advanced-layer-deferral-contract-2026-06-28.md` for the handoff contract for future layers.
 - `.github/issues/manifest.yaml` for the auditable staged development manifest.
 
@@ -201,6 +202,7 @@ testthat::test_dir("tests/testthat")
 For package checks in environments without `rmarkdown` or network access to install suggests, use:
 
 ```sh
+R CMD build --no-build-vignettes .
 _R_CHECK_FORCE_SUGGESTS_=false R CMD check --no-manual --no-build-vignettes PCRprofilR_0.2.0.tar.gz
 ```
 

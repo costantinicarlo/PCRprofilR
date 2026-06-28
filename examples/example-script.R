@@ -38,14 +38,17 @@ assay <- as_pcr_assay(data.frame(
     confirm_concentration = c(0.2, 0.2, 0.2),
     biological_label = c("arabiensis", "gambiae", "melas"),
     rule_group = c("species", "species", "species"),
+    target_role = c("optional", "optional", "optional"),
     stringsAsFactors = FALSE
 ))
 
 peak_calls <- detect_pcr_peaks(peaks, assay)
 sample_calls <- classify_pcr_samples(peak_calls)
 qc <- qc_pcr_run(peaks, sample_calls)
+replicate_summary <- summarize_pcr_replicates(sample_calls, qc = qc)
 
-head(sample_calls[, c("sample_id", "call", "call_state", "threshold_status")])
-head(qc[, c("sample_id", "qc_status", "contamination_candidate")])
+head(sample_calls[, c("sample_id", "call", "call_state", "matched_targets", "rule_status", "review_required")])
+head(qc[, c("sample_id", "control_role", "qc_status", "contamination_candidate")])
+head(replicate_summary)
 
 plot_pcr_evidence(peak_calls, sample_calls, qc)

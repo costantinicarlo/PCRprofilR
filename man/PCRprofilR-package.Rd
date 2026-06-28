@@ -4,9 +4,9 @@
 \name{PCRprofilR-package}
 \alias{PCRprofilR}
 \alias{PCRprofilR-package}
-\title{PCRprofilR: Classification of Nucleic Acids Fragments}
+\title{PCRprofilR: Classification of Nucleic Acid Fragments}
 \description{
-Profiling of nucleic acids fragments following PCR amplification, from output files of high-throughput capillary elecrophoresis bioanalyzers.
+Profiling nucleic acid fragments following PCR amplification, using output files from high-throughput capillary electrophoresis bioanalyzers.
 }
 \author{
 \strong{Maintainer}: Carlo Costantini \email{carlo.costantini@ird.fr} (\href{https://orcid.org/0000-0003-1016-129X}{ORCID})
