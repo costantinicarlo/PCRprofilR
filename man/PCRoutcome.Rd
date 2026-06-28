@@ -33,13 +33,13 @@ Samples that cannot be assigned to a category return NA.
 data(mosquito)
 
 # define a named vector of classification sizes (categories are species names in this case)
-targets <-  c(arabiensis = 315, gambiae = 390, melas = 464)
+targets <- c(arabiensis = 315, gambiae = 390, melas = 464)
 
 # classify samples with a tolerance of ±10 bp and 0.2 ng/uL concentration
-head(PCRoutcome(mosquito, targets, c(10,10), 0.2), head = 10L)
+head(PCRoutcome(mosquito, targets, c(10, 10), 0.2), head = 10L)
 
 # the tolerance around the target size can be asymmetric
-head(PCRoutcome(mosquito, targets, c(0,10), 0.2), head = 10L)
+head(PCRoutcome(mosquito, targets, c(0, 10), 0.2), head = 10L)
 
 }
 \seealso{

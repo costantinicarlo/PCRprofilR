@@ -44,13 +44,13 @@ diagnostic amplicon.
 data(mosquito)
 
 # detect samples with a target amplicon size of 390 ± 10 bp and 0.2 ng/uL concentration
-PCRpositive(mosquito, 390, c(10,10), 0.2)
+PCRpositive(mosquito, 390, c(10, 10), 0.2)
 
 # the tolerance around the target size can be asymmetric
-PCRpositive(mosquito, 390, c(0,10), 0.2)
+PCRpositive(mosquito, 390, c(0, 10), 0.2)
 
 # another target size will obviously return a different vector of samples
-PCRpositive(mosquito, 315, c(0,10), 0.2)
+PCRpositive(mosquito, 315, c(0, 10), 0.2)
 
 }
 \seealso{

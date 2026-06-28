@@ -25,6 +25,6 @@ on the top left corner of each 'pherogram'.
 # load the data
 data(mosquito)
 
-PCRpherogram(mosquito, target_size = 390, tolerance = c(0,10), threshold = 0.05)
+PCRpherogram(mosquito, target_size = 390, tolerance = c(0, 10), threshold = 0.05)
 
 }

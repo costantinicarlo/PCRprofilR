@@ -10,6 +10,27 @@ pcr_peaks_required_cols <- c(
     "instrument"
 )
 
+#' Validate a canonical PCR peak table
+#'
+#' `validate_pcr_peaks()` checks that an object satisfies the canonical
+#' `pcr_peaks` schema used by PCRprofilR's deterministic interpretation
+#' workflow.
+#'
+#' Peak size must be numeric, finite, non-missing, and strictly positive.
+#' Concentration must be numeric, finite, non-missing, and non-negative. Required
+#' identifier columns must be non-empty character values. Remove ladder,
+#' calibration, blank, or other non-peak instrument rows before strict
+#' validation.
+#'
+#' @param x Candidate canonical peak table.
+#' @param allow_qc_issues Logical scalar. If `FALSE`, validation is strict. If
+#'   `TRUE`, selected QC-able issues, currently missing or malformed well
+#'   identifiers, are allowed through for later QC review.
+#'
+#' @return The validated input, invisibly.
+#'
+#' @seealso [as_pcr_peaks()], [qc_pcr_run()]
+#' @export
 validate_pcr_peaks <- function(x, allow_qc_issues = FALSE) {
     if (!inherits(x, "data.frame")) {
         stop("pcr_peaks input must be a data frame", call. = FALSE)

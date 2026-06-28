@@ -46,10 +46,11 @@ data(mosquito)
 
 # parameter settings
 targets <- c(arabiensis = 315, gambiae = 390, melas = 464)
-tolerance <- c(0,10)
+tolerance <- c(0, 10)
 threshold <- 0.05
 
 PCRexplorer(mosquito, targets, tolerance, threshold,
-  logx = TRUE, logy = TRUE, join = TRUE, control = "CTR")
+  logx = TRUE, logy = TRUE, join = TRUE, control = "CTR"
+)
 
 }

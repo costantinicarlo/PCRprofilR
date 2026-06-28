@@ -27,3 +27,4 @@
 - Added `plot_pcr_evidence()` as a classified-object plotting path that consumes peak evidence, sample calls, and QC objects without recomputing positivity rules.
 - Reworked the package vignette as a first-class tutorial indexed as "PCRprofilR tutorial: from electrophoresis peaks to sample calls" and shipped installed vignette artifacts so `vignette("PCRprofilR")` can discover it when vignette building is skipped.
 - Regenerated the installed vignette HTML from an installed package context so rendered output no longer shows YAML metadata or captured `library(PCRprofilR)` / `data(mosquito)` errors.
+- Split the curated public workflow helpers into individual help topics so each function is visible as a first-class entry in the package help index.

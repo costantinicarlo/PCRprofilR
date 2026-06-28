@@ -9,6 +9,24 @@ pcr_assay_required_cols <- c(
     "rule_group"
 )
 
+#' Validate a canonical PCR assay specification
+#'
+#' `validate_pcr_assay()` checks that an assay specification satisfies the
+#' canonical `pcr_assay` schema used to compare observed PCR peaks with expected
+#' targets.
+#'
+#' Required assay fields describe target identity, expected size, accepted size
+#' window, minimum analytical concentration, biological label, and deterministic
+#' rule group. If `confirm_concentration` is absent, it is treated as equal to
+#' `min_concentration` for validation. If `target_role` is present, values must
+#' be `required`, `optional`, or `forbidden`.
+#'
+#' @param x Candidate canonical assay table.
+#'
+#' @return The validated input, invisibly.
+#'
+#' @seealso [as_pcr_assay()], [detect_pcr_peaks()]
+#' @export
 validate_pcr_assay <- function(x) {
     if (!inherits(x, "data.frame")) {
         stop("pcr_assay input must be a data frame", call. = FALSE)

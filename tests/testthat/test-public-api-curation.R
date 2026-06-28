@@ -16,14 +16,13 @@ test_that("curated public API exports are available", {
 })
 
 test_that("curated public API exports are documented", {
-    doc_path <- testthat::test_path("..", "..", "man", "pcr_public_api.Rd")
+    man_dir <- testthat::test_path("..", "..", "man")
     testthat::skip_if_not(
-        file.exists(doc_path),
-        "Source man files are not included in package build artifacts."
+        dir.exists(man_dir),
+        "Source man files are not available in installed-package test context."
     )
-    doc_lines <- readLines(doc_path, warn = FALSE)
 
-    expected_aliases <- paste0("\\alias{", c(
+    expected_topics <- c(
         "as_pcr_peaks",
         "as_pcr_assay",
         "validate_pcr_peaks",
@@ -34,9 +33,20 @@ test_that("curated public API exports are documented", {
         "summarize_pcr_replicates",
         "run_pcr_batch",
         "report_pcr_calls"
-    ), "}")
+    )
 
-    expect_true(all(expected_aliases %in% doc_lines))
+    for (topic in expected_topics) {
+        doc_path <- file.path(man_dir, paste0(topic, ".Rd"))
+        expect_true(file.exists(doc_path), info = topic)
+
+        doc_lines <- readLines(doc_path, warn = FALSE)
+        expect_true(any(doc_lines == paste0("\\name{", topic, "}")), info = topic)
+        expect_true(any(doc_lines == paste0("\\alias{", topic, "}")), info = topic)
+        expect_false(any(grepl("\\\\name\\{pcr_public_api\\}", doc_lines)), info = topic)
+    }
+
+    umbrella_doc_path <- file.path(man_dir, "pcr_public_api.Rd")
+    expect_false(file.exists(umbrella_doc_path))
 })
 
 test_that("curated API functions compose into deterministic pipeline", {
