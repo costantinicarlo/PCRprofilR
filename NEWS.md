@@ -13,3 +13,4 @@
 - Added `pcr_sample_calls()` deterministic sample-level aggregation from peak evidence.
 - Added `pcr_qc()` machine-readable QC summary with initial run/sample/control flags.
 - Routed legacy `PCRpositive()` internals through canonical peaks, assay, evidence, and sample-call layers while preserving output behavior.
+- Added three-zone threshold evidence in canonical calls (`below_analytical`, `analytical_to_confirmatory`, `above_confirmatory`) with sample-level zone precedence summaries.

@@ -16,6 +16,7 @@ test_that("pcr_assay constructor returns validated canonical object", {
     expect_s3_class(out, "pcr_assay")
     expect_equal(out$expected_size_bp, 390)
     expect_equal(out$min_concentration, 0.2)
+    expect_equal(out$confirm_concentration, 0.2)
 })
 
 test_that("pcr_assay reports missing required columns", {
@@ -52,6 +53,10 @@ test_that("pcr_assay enforces numeric and interval constraints", {
     dat$lower_size_bp <- 380
     dat$min_concentration <- -0.1
     expect_error(PCRprofilR:::pcr_assay(dat), "min_concentration")
+
+    dat$min_concentration <- 0.2
+    dat$confirm_concentration <- 0.1
+    expect_error(PCRprofilR:::pcr_assay(dat), "confirm_concentration")
 })
 
 test_that("pcr_assay coerces factor identifiers to character", {

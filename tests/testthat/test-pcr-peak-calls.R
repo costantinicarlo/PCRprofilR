@@ -27,9 +27,9 @@ test_that("pcr_peak_calls returns evidence table with expected columns", {
     out <- PCRprofilR:::pcr_peak_calls(peaks, assay)
 
     expect_s3_class(out, "pcr_peak_calls")
-    expect_true(all(c("size_delta_bp", "within_window", "above_min_concentration", "evidence_zone", "matched") %in% names(out)))
+    expect_true(all(c("size_delta_bp", "within_window", "above_min_concentration", "above_confirm_concentration", "evidence_zone", "matched") %in% names(out)))
     expect_true(out$matched[[1]])
-    expect_identical(out$evidence_zone[[1]], "above_analytical")
+    expect_identical(out$evidence_zone[[1]], "above_confirmatory")
 })
 
 test_that("pcr_peak_calls keeps size and concentration boundaries inclusive", {

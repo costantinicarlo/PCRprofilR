@@ -78,7 +78,7 @@ stages:
 
   - id: stage-0.4
     tracking_file: .github/issues/stage-0.4/TRACKING.md
-    status: in_progress
+    status: completed
     completion_gates:
       - pcr_peak_calls_pcr_sample_calls_pcr_qc_operational
       - public_api_usable
@@ -109,7 +109,7 @@ stages:
 
   - id: stage-0.5
     tracking_file: .github/issues/stage-0.5/TRACKING.md
-    status: blocked
+      status: in_progress
     blocked_by_stage: stage-0.4
     completion_gates:
       - call_states_include_weak_indeterminate_review
@@ -118,7 +118,7 @@ stages:
     issues:
       - id: S05-01
         file: .github/issues/stage-0.5/01-three-zone-threshold-logic.md
-        status: open
+        status: closed
         depends_on:
           - S04-02
       - id: S05-02
