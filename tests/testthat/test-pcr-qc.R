@@ -28,7 +28,7 @@ test_that("pcr_qc returns machine-readable QC flags", {
     qc <- PCRprofilR:::pcr_qc(peaks, sample_calls)
 
     expect_s3_class(qc, "pcr_qc")
-    expect_true(all(c("has_missing_well_id", "duplicate_sample_id_in_run", "control_sample", "no_matched_targets", "qc_status") %in% names(qc)))
+    expect_true(all(c("has_missing_well_id", "duplicate_sample_id_in_run", "control_sample", "no_matched_targets", "weak_positive_state", "ambiguous_call_state", "indeterminate_call_state", "contamination_candidate", "qc_status") %in% names(qc)))
 })
 
 test_that("pcr_qc flags duplicate sample IDs across wells", {

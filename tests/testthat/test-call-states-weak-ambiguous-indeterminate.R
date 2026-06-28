@@ -55,7 +55,7 @@ test_that("pcr_sample_calls assigns ambiguous_review for multiple matched target
         upper_size_bp = c(325, 400),
         min_concentration = c(0.2, 0.2),
         confirm_concentration = c(0.3, 0.3),
-        biological_label = c("a", "b"),
+        biological_label = c("a", "a"),
         rule_group = c("species", "species"),
         stringsAsFactors = FALSE
     ))

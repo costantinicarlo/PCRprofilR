@@ -15,3 +15,4 @@
 - Routed legacy `PCRpositive()` internals through canonical peaks, assay, evidence, and sample-call layers while preserving output behavior.
 - Added three-zone threshold evidence in canonical calls (`below_analytical`, `analytical_to_confirmatory`, `above_confirmatory`) with sample-level zone precedence summaries.
 - Added explicit internal call states (`weak_positive`, `ambiguous_review`, `indeterminate_review`) and corresponding machine-readable QC review flags.
+- Added deterministic `hybrid_candidate` and `mixed_profile_candidate` sample states and QC `contamination_candidate` hooks for positive controls and duplicate review patterns.

@@ -5,9 +5,9 @@ Goal: implement non-binary deterministic interpretation logic.
 Checklist:
 - [x] 01-three-zone-threshold-logic.md
 - [x] 02-weak-ambiguous-indeterminate-calls.md
-- [ ] 03-hybrid-mixed-contamination-rules.md
+- [x] 03-hybrid-mixed-contamination-rules.md
 
 Stage completion gates:
-- [ ] Calls include weak, indeterminate, and review states
-- [ ] Hybrid/mixed/contamination logic evidence-backed
-- [ ] Ambiguous cases preserved, not forced binary
+- [x] Calls include weak, indeterminate, and review states
+- [x] Hybrid/mixed/contamination logic evidence-backed
+- [x] Ambiguous cases preserved, not forced binary

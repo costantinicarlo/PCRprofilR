@@ -109,8 +109,7 @@ stages:
 
   - id: stage-0.5
     tracking_file: .github/issues/stage-0.5/TRACKING.md
-      status: in_progress
-    blocked_by_stage: stage-0.4
+    status: completed
     completion_gates:
       - call_states_include_weak_indeterminate_review
       - hybrid_mixed_contamination_evidence_backed
@@ -128,15 +127,14 @@ stages:
           - S05-01
       - id: S05-03
         file: .github/issues/stage-0.5/03-hybrid-mixed-contamination-rules.md
-        status: open
+        status: closed
         depends_on:
           - S05-02
           - S04-03
 
   - id: stage-0.6
     tracking_file: .github/issues/stage-0.6/TRACKING.md
-    status: blocked
-    blocked_by_stage: stage-0.5
+    status: open
     completion_gates:
       - batch_helpers_use_core_objects
       - replicate_summaries_deterministic_and_tested
