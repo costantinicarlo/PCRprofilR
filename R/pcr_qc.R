@@ -1,0 +1,57 @@
+pcr_qc <- function(peaks, sample_calls = NULL) {
+    if (!inherits(peaks, "pcr_peaks")) {
+        peaks <- pcr_peaks(peaks)
+    }
+
+    peaks_tbl <- tibble::as_tibble(peaks)
+
+    sample_base <- peaks_tbl |>
+        dplyr::group_by(.data$run_id, .data$plate_id, .data$well_id, .data$sample_id) |>
+        dplyr::summarise(
+            n_peaks = dplyr::n(),
+            max_concentration = max(.data$concentration, na.rm = TRUE),
+            .groups = "drop"
+        )
+
+    duplicate_tbl <- peaks_tbl |>
+        dplyr::distinct(.data$run_id, .data$sample_id, .data$well_id) |>
+        dplyr::group_by(.data$run_id, .data$sample_id) |>
+        dplyr::summarise(n_wells = dplyr::n(), .groups = "drop") |>
+        dplyr::mutate(duplicate_sample_id_in_run = .data$n_wells > 1) |>
+        dplyr::select("run_id", "sample_id", "duplicate_sample_id_in_run")
+
+    qc <- dplyr::left_join(sample_base, duplicate_tbl, by = c("run_id", "sample_id"))
+
+    qc <- dplyr::mutate(
+        qc,
+        has_missing_well_id = is.na(.data$well_id) | !nzchar(.data$well_id),
+        control_sample = grepl("^(CTR|CONTROL|NTC)$", .data$sample_id, ignore.case = TRUE),
+        duplicate_sample_id_in_run = dplyr::coalesce(.data$duplicate_sample_id_in_run, FALSE)
+    )
+
+    if (!is.null(sample_calls)) {
+        if (!inherits(sample_calls, "pcr_sample_calls")) {
+            sample_calls <- pcr_sample_calls(sample_calls)
+        }
+        call_tbl <- tibble::as_tibble(sample_calls) |>
+            dplyr::select("run_id", "plate_id", "well_id", "sample_id", "call")
+
+        qc <- dplyr::left_join(qc, call_tbl, by = c("run_id", "plate_id", "well_id", "sample_id"))
+        qc <- dplyr::mutate(qc, no_matched_targets = .data$call == "negative")
+    } else {
+        qc$call <- NA_character_
+        qc$no_matched_targets <- NA
+    }
+
+    qc <- dplyr::mutate(
+        qc,
+        qc_status = dplyr::case_when(
+            .data$has_missing_well_id ~ "fail",
+            .data$duplicate_sample_id_in_run ~ "review",
+            TRUE ~ "pass"
+        )
+    )
+
+    class(qc) <- c("pcr_qc", class(qc))
+    qc
+}

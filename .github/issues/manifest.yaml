@@ -97,7 +97,7 @@ stages:
           - S04-01
       - id: S04-03
         file: .github/issues/stage-0.4/03-pcr-qc-machine-readable-flags.md
-        status: open
+        status: closed
         depends_on:
           - S04-01
       - id: S04-04
