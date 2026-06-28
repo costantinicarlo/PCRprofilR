@@ -23,7 +23,7 @@ execution:
 stages:
   - id: stage-0.2
     tracking_file: .github/issues/stage-0.2/TRACKING.md
-    status: open
+    status: in_progress
     completion_gates:
       - all_stage_issues_closed_or_deferred_with_rationale
       - ci_green
@@ -32,7 +32,7 @@ stages:
     issues:
       - id: S02-01
         file: .github/issues/stage-0.2/01-baseline-tests-pcroutcome.md
-        status: open
+        status: closed
         depends_on: []
       - id: S02-02
         file: .github/issues/stage-0.2/02-baseline-tests-visual-functions.md
