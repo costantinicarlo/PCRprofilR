@@ -26,3 +26,4 @@
 - Made `rule_group` operational through optional assay `target_role` values (`required`, `optional`, `forbidden`) and added rule-status evidence fields to sample calls; compatible multi-target same-label profiles now resolve as positives instead of ambiguous reviews.
 - Added `plot_pcr_evidence()` as a classified-object plotting path that consumes peak evidence, sample calls, and QC objects without recomputing positivity rules.
 - Reworked the package vignette as a first-class tutorial indexed as "PCRprofilR tutorial: from electrophoresis peaks to sample calls" and shipped installed vignette artifacts so `vignette("PCRprofilR")` can discover it when vignette building is skipped.
+- Regenerated the installed vignette HTML from an installed package context so rendered output no longer shows YAML metadata or captured `library(PCRprofilR)` / `data(mosquito)` errors.

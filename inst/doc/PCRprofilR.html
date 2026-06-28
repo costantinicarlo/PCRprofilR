@@ -12,16 +12,8 @@ img{max-width:100%}
 </style>
 </head>
 <body>
-<hr />
-<h2>title: &quot;PCRprofilR tutorial: from electrophoresis peaks to sample calls&quot;
-output: rmarkdown::html_vignette
-vignette: &gt;
-%\VignetteIndexEntry{PCRprofilR tutorial: from electrophoresis peaks to sample calls}
-%\VignetteEngine{knitr::rmarkdown}
-%\VignetteEncoding{UTF-8}</h2>
+<h1>PCRprofilR tutorial: from electrophoresis peaks to sample calls</h1>
 <pre><code class="language-r">library(PCRprofilR)
-#&gt; Error in `library()`:
-#&gt; ! there is no package called 'PCRprofilR'
 </code></pre>
 <h2>What this tutorial is for</h2>
 <p>This tutorial shows how to turn a capillary electrophoresis result into an auditable table of PCR sample calls.</p>
@@ -44,11 +36,17 @@ vignette: &gt;
 <h2>Step 1. Look at the instrument output</h2>
 <p>The data set is already included in the package, so we can load it directly. In a real project, this table would usually come from a CSV or TSV file exported by the electrophoresis instrument software.</p>
 <pre><code class="language-r">data(mosquito)
-#&gt; Warning in data(mosquito): data set 'mosquito' not found
 
 head(mosquito[, c(&quot;WellID&quot;, &quot;SampleID&quot;, &quot;Type&quot;, &quot;Size&quot;, &quot;Conc&quot;)], 8)
-#&gt; Error:
-#&gt; ! object 'mosquito' not found
+#&gt;   WellID   SampleID Type        Size       Conc
+#&gt; 1    A01 SN20-00548   LM          NA 5.00000000
+#&gt; 2    A01 SN20-00548   UM 1500.000000 5.00000000
+#&gt; 3    A01 SN20-00548    ?          NA         NA
+#&gt; 4    B01 SN20-02376   LM          NA 5.00000000
+#&gt; 5    B01 SN20-02376         9.352784 0.57260202
+#&gt; 6    B01 SN20-02376        41.292985 0.05922034
+#&gt; 7    B01 SN20-02376        46.185707 0.05089400
+#&gt; 8    B01 SN20-02376        57.443583 0.03860815
 </code></pre>
 <p>The important columns are:</p>
 <ul>
@@ -73,12 +71,11 @@ head(mosquito[, c(&quot;WellID&quot;, &quot;SampleID&quot;, &quot;Type&quot;, &q
     !is.na(SampleID) &amp;
     nzchar(as.character(SampleID))
 )
-#&gt; Error:
-#&gt; ! object 'mosquito' not found
 
 table(usable_peak_rows)
-#&gt; Error:
-#&gt; ! object 'usable_peak_rows' not found
+#&gt; usable_peak_rows
+#&gt; FALSE  TRUE 
+#&gt;    55   223
 </code></pre>
 <p>Rows marked <code>TRUE</code> are usable peak rows for this tutorial. Rows marked <code>FALSE</code> are not sent to the strict peak interpreter.</p>
 <h2>Step 2. Prepare the peak table</h2>
@@ -91,20 +88,22 @@ table(usable_peak_rows)
   RawFile = &quot;mosquito.csv&quot;,
   Instrument = &quot;labchip&quot;
 )
-#&gt; Error:
-#&gt; ! object 'mosquito' not found
 
 peaks_input &lt;- peaks_input[usable_peak_rows, ]
-#&gt; Error:
-#&gt; ! object 'peaks_input' not found
 
 peaks &lt;- as_pcr_peaks(peaks_input)
-#&gt; Error in `as_pcr_peaks()`:
-#&gt; ! could not find function &quot;as_pcr_peaks&quot;
 
 head(peaks)
-#&gt; Error:
-#&gt; ! object 'peaks' not found
+#&gt; # A tibble: 6 x 9
+#&gt;   run_id plate_id well_id sample_id  peak_id size_bp concentration raw_file    
+#&gt;   &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;dbl&gt;         &lt;dbl&gt; &lt;chr&gt;       
+#&gt; 1 run-1  plate-1  A01     SN20-00548 peak-2  1500           5      mosquito.csv
+#&gt; 2 run-1  plate-1  B01     SN20-02376 peak-5     9.35        0.573  mosquito.csv
+#&gt; 3 run-1  plate-1  B01     SN20-02376 peak-6    41.3         0.0592 mosquito.csv
+#&gt; 4 run-1  plate-1  B01     SN20-02376 peak-7    46.2         0.0509 mosquito.csv
+#&gt; 5 run-1  plate-1  B01     SN20-02376 peak-8    57.4         0.0386 mosquito.csv
+#&gt; 6 run-1  plate-1  B01     SN20-02376 peak-9    62.7         0.0243 mosquito.csv
+#&gt; # i 1 more variable: instrument &lt;chr&gt;
 </code></pre>
 <p>If you see an error saying that <code>size_bp</code> or <code>concentration</code> must be numeric and non-missing, it usually means that non-peak rows, ladder rows, or blank instrument rows were still present in the input.</p>
 <h2>Step 3. Describe the assay</h2>
@@ -136,19 +135,21 @@ head(peaks)
   target_role = c(&quot;optional&quot;, &quot;optional&quot;, &quot;optional&quot;),
   stringsAsFactors = FALSE
 ))
-#&gt; Error in `as_pcr_assay()`:
-#&gt; ! could not find function &quot;as_pcr_assay&quot;
 
 assay
-#&gt; Error:
-#&gt; ! object 'assay' not found
+#&gt; # A tibble: 3 x 10
+#&gt;   assay_id      target_id  expected_size_bp lower_size_bp upper_size_bp
+#&gt;   &lt;chr&gt;         &lt;chr&gt;                 &lt;dbl&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+#&gt; 1 species-assay arabiensis              315           315           325
+#&gt; 2 species-assay gambiae                 390           390           400
+#&gt; 3 species-assay melas                   464           464           474
+#&gt; # i 5 more variables: min_concentration &lt;dbl&gt;, confirm_concentration &lt;dbl&gt;,
+#&gt; #   biological_label &lt;chr&gt;, rule_group &lt;chr&gt;, target_role &lt;chr&gt;
 </code></pre>
 <p>The <code>target_role</code> column is useful for more complex assays. In this simple species-identification example each target is optional: a sample can match one of them, none of them, or more than one if the profile needs review.</p>
 <h2>Step 4. Compare observed peaks with expected targets</h2>
 <p>The next step creates peak-level evidence. Each observed fragment is compared with each expected target.</p>
 <pre><code class="language-r">peak_calls &lt;- detect_pcr_peaks(peaks, assay)
-#&gt; Error in `detect_pcr_peaks()`:
-#&gt; ! could not find function &quot;detect_pcr_peaks&quot;
 
 head(
   peak_calls[peak_calls$matched, c(
@@ -162,8 +163,16 @@ head(
     &quot;matched&quot;
   )]
 )
-#&gt; Error:
-#&gt; ! object 'peak_calls' not found
+#&gt; # A tibble: 6 x 8
+#&gt;   sample_id  target_id  size_bp expected_size_bp size_delta_bp concentration
+#&gt;   &lt;chr&gt;      &lt;chr&gt;        &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+#&gt; 1 SN20-02376 gambiae       397.              390          7.00        0.902 
+#&gt; 2 SN20-02377 arabiensis    322.              315          6.66        0.642 
+#&gt; 3 SN20-02378 gambiae       394.              390          4.40        0.206 
+#&gt; 4 SN20-02381 gambiae       391.              390          1.09        1.10  
+#&gt; 5 SN20-02384 gambiae       397.              390          7.46        0.873 
+#&gt; 6 SN20-02385 arabiensis    325.              315          9.74        0.0991
+#&gt; # i 2 more variables: evidence_zone &lt;chr&gt;, matched &lt;lgl&gt;
 </code></pre>
 <p>The key columns are:</p>
 <ul>
@@ -175,8 +184,6 @@ head(
 <h2>Step 5. Turn evidence into sample calls</h2>
 <p>Now we summarize the peak evidence sample by sample.</p>
 <pre><code class="language-r">sample_calls &lt;- classify_pcr_samples(peak_calls)
-#&gt; Error in `classify_pcr_samples()`:
-#&gt; ! could not find function &quot;classify_pcr_samples&quot;
 
 head(sample_calls[, c(
   &quot;well_id&quot;,
@@ -187,13 +194,21 @@ head(sample_calls[, c(
   &quot;rule_status&quot;,
   &quot;review_required&quot;
 )])
-#&gt; Error:
-#&gt; ! object 'sample_calls' not found
+#&gt; # A tibble: 6 x 7
+#&gt;   well_id sample_id call  call_state matched_targets rule_status review_required
+#&gt;   &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;      &lt;chr&gt;           &lt;chr&gt;       &lt;lgl&gt;          
+#&gt; 1 A01     SN20-005~ nega~ negative   &quot;&quot;              compatible  FALSE          
+#&gt; 2 A02     SN20-012~ nega~ negative   &quot;&quot;              compatible  FALSE          
+#&gt; 3 A03     SN20-023~ posi~ positive   &quot;gambiae&quot;       compatible  FALSE          
+#&gt; 4 B01     SN20-023~ posi~ positive   &quot;gambiae&quot;       compatible  FALSE          
+#&gt; 5 B02     SN20-023~ nega~ negative   &quot;&quot;              compatible  FALSE          
+#&gt; 6 B03     SN20-023~ nega~ negative   &quot;&quot;              compatible  FALSE
 </code></pre>
 <p><code>call</code> is the simple positive/negative field. <code>call_state</code> is the field to read when you want the real interpretation status.</p>
 <pre><code class="language-r">table(sample_calls$call_state)
-#&gt; Error:
-#&gt; ! object 'sample_calls' not found
+#&gt; 
+#&gt;      negative      positive weak_positive 
+#&gt;            29            16             3
 </code></pre>
 <p>The main call states are:</p>
 <ul>
@@ -208,8 +223,6 @@ head(sample_calls[, c(
 <h2>Step 6. Add quality-control flags</h2>
 <p>QC is not separate from interpretation. A call is easier to trust when the sample, controls, and run metadata are also consistent.</p>
 <pre><code class="language-r">qc &lt;- qc_pcr_run(peaks, sample_calls)
-#&gt; Error in `qc_pcr_run()`:
-#&gt; ! could not find function &quot;qc_pcr_run&quot;
 
 head(qc[, c(
   &quot;well_id&quot;,
@@ -219,12 +232,21 @@ head(qc[, c(
   &quot;contamination_candidate&quot;,
   &quot;duplicate_sample_id_in_run&quot;
 )])
-#&gt; Error:
-#&gt; ! object 'qc' not found
+#&gt; # A tibble: 6 x 6
+#&gt;   well_id sample_id  control_role qc_status contamination_candidate
+#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;        &lt;chr&gt;     &lt;lgl&gt;                  
+#&gt; 1 A01     SN20-00548 sample       pass      FALSE                  
+#&gt; 2 A02     SN20-01225 sample       pass      FALSE                  
+#&gt; 3 A03     SN20-02323 sample       pass      FALSE                  
+#&gt; 4 B01     SN20-02376 sample       pass      FALSE                  
+#&gt; 5 B02     SN20-02386 sample       pass      FALSE                  
+#&gt; 6 B03     SN20-02397 sample       pass      FALSE                  
+#&gt; # i 1 more variable: duplicate_sample_id_in_run &lt;lgl&gt;
 </code></pre>
 <pre><code class="language-r">table(qc$qc_status)
-#&gt; Error:
-#&gt; ! object 'qc' not found
+#&gt; 
+#&gt; pass 
+#&gt;   48
 </code></pre>
 <p><code>qc_status</code> is deliberately simple:</p>
 <ul>
@@ -236,19 +258,26 @@ head(qc[, c(
 <h2>Step 7. Plot the classified evidence</h2>
 <p>The modern plotting helper consumes the evidence and call objects that were already computed. It does not recalculate positivity rules inside the plot.</p>
 <pre><code class="language-r">plot_pcr_evidence(peak_calls, sample_calls = sample_calls, qc = qc)
-#&gt; Error in `plot_pcr_evidence()`:
-#&gt; ! could not find function &quot;plot_pcr_evidence&quot;
 </code></pre>
+<p><img src="figure/classified-plot-1.png" alt="plot of chunk classified-plot" /></p>
 <p>This plot is useful for review because the points are colored by the evidence zone already assigned by the deterministic interpreter.</p>
 <h2>Step 8. Summarize repeated tests</h2>
 <p>If the same biological sample is tested several times, the replicate summary can show whether the repeated calls agree. The example data do not contain a full replicate design, but the function works on the same sample-call and QC tables.</p>
 <pre><code class="language-r">replicate_summary &lt;- summarize_pcr_replicates(sample_calls, qc = qc)
-#&gt; Error in `summarize_pcr_replicates()`:
-#&gt; ! could not find function &quot;summarize_pcr_replicates&quot;
 
 head(replicate_summary)
-#&gt; Error:
-#&gt; ! object 'replicate_summary' not found
+#&gt; # A tibble: 6 x 11
+#&gt;   sample_id  n_replicates positive_replicates negative_replicates
+#&gt;   &lt;chr&gt;             &lt;int&gt;               &lt;int&gt;               &lt;int&gt;
+#&gt; 1 CTR                   1                   1                   0
+#&gt; 2 SN20-00548            1                   0                   1
+#&gt; 3 SN20-00584            1                   0                   1
+#&gt; 4 SN20-00871            1                   0                   1
+#&gt; 5 SN20-00882            1                   0                   1
+#&gt; 6 SN20-01069            1                   0                   1
+#&gt; # i 7 more variables: review_replicates &lt;int&gt;, unique_call_states &lt;int&gt;,
+#&gt; #   replicate_concordance &lt;chr&gt;, consensus_call_state &lt;chr&gt;,
+#&gt; #   consensus_call &lt;chr&gt;, any_qc_fail &lt;lgl&gt;, any_contamination_candidate &lt;lgl&gt;
 </code></pre>
 <p>For real replicate designs, choose <code>replicate_keys</code> so that repeated wells, plates, or runs are grouped under the same biological sample identifier.</p>
 <h2>Step 9. Export reproducible results</h2>
@@ -285,9 +314,14 @@ PCRexplorer(
   join = TRUE,
   control = &quot;CTR&quot;
 )
-#&gt; Error in `PCRexplorer()`:
-#&gt; ! could not find function &quot;PCRexplorer&quot;
+#&gt; Warning: Removed 193 rows containing missing values or values outside the scale range
+#&gt; (`geom_point()`).
+#&gt; Warning: Removed 193 rows containing missing values or values outside the scale range
+#&gt; (`geom_line()`).
+#&gt; Warning: Removed 7 rows containing missing values or values outside the scale range
+#&gt; (`geom_line()`).
 </code></pre>
+<p><img src="figure/legacy-explorer-1.png" alt="plot of chunk legacy-explorer" /></p>
 <p><code>PCRexplorer()</code> helps you inspect the raw run. Once the assay settings are chosen, use the canonical workflow above for reproducible evidence, calls, QC, plots, and exports.</p>
 <h2>A minimal complete script</h2>
 <p>This is the same workflow without the teaching text.</p>
@@ -344,3 +378,4 @@ replicate_summary &lt;- summarize_pcr_replicates(sample_calls, qc = qc)
 
 </body>
 </html>
+
