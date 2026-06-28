@@ -1,146 +1,145 @@
-# PCRprofilR Architecture Audit and Staged Plan
+# PCRprofilR Architecture Audit
 
-Date: 2026-06-27
+Date: 2026-06-28
+Scope: Post-implementation audit after completion through stage-0.6.
 
-## 1. Current package structure
+## 1. Executive status
 
-- Public functions are implemented in `R/` with one function per file.
-- Current exports: `PCRpositive()`, `PCRoutcome()`, `PCRexplorer()`, `PCRpherogram()`.
-- Internal helper: `inside.range()`.
-- Single bundled dataset: `mosquito`.
-- No test suite currently present.
-- No CI workflows currently present.
+The architecture plan is implemented through stage-0.6, with deterministic core layers, machine-readable QC, wrapper routing, replicate summaries, batch orchestration helpers, and export/provenance helpers all present and tested.
 
-## 2. Current exported functions
+Stage status summary (from manifest):
 
-- `PCRpositive(dat, target_size, tolerance, threshold)`
-  - Detects samples with at least one fragment in size window and above concentration threshold.
-  - Returns sorted unique character vector of `SampleID` or `NULL` when none.
-- `PCRoutcome(dat, targets, tolerance, threshold)`
-  - Applies `PCRpositive()` over named targets and joins back to unique `WellID`/`SampleID` rows.
-  - Returns data frame with one row per sample and optional `Outcome` label.
-- `PCRexplorer(...)`
-  - Plots size/concentration scatter with optional target windows and guides.
-- `PCRpherogram(...)`
-  - Plots per-well bar-style fragment profiles and highlights current positive logic.
+- stage-0.2: completed
+- stage-0.3: completed
+- stage-0.4: completed
+- stage-0.5: completed
+- stage-0.6: completed
 
-## 3. Current assumptions
+## 2. Current implemented architecture
 
-- Required input columns are hard-coded (`WellID`, `SampleID`, `Size`, `Conc`).
-- Input validation uses `stopifnot()` checks directly in each function.
-- Classification is threshold-window based with no weak zone and no explicit QC layer.
-- Multi-target interpretation in `PCRoutcome()` is only label assignment by target hits.
-- Plot functions depend on input schema and may include implicit interpretation logic.
+Implemented deterministic pipeline:
 
-## 4. Risks in present implementation
+raw input -> normalize_pcr_peaks() -> pcr_peaks() -> pcr_assay() -> pcr_peak_calls() -> pcr_sample_calls() -> pcr_qc() -> pcr_replicate_summary() / pcr_batch_run() / pcr_export_artifacts()
 
-- Return type instability: `PCRpositive()` returns character vector or `NULL`.
-- Validation logic is duplicated and uneven across functions.
-- No formal object model for peak evidence, sample calls, or QC flags.
-- No machine-readable QC outputs (controls, contamination, invalid runs/samples).
-- No tests to freeze behavior before refactoring.
-- No CI safety net for incremental architecture changes.
-- Future deployment paths (CLI/Docker/Shiny) would currently duplicate logic unless core is modularized.
+Canonical object/functions currently present:
 
-## 5. Proposed internal object model
+- pcr_peaks / validate_pcr_peaks
+- pcr_assay / validate_pcr_assay
+- normalize_pcr_peaks
+- pcr_peak_calls
+- pcr_sample_calls
+- pcr_qc
+- pcr_replicate_summary
+- pcr_batch_run
+- pcr_export_artifacts
 
-Introduce stable tibble-first objects (light S3 optional):
+Legacy compatibility wrappers retained and usable:
 
-- `pcr_peaks`: canonical normalized peak table.
-- `pcr_assay`: validated assay specification.
-- `pcr_peak_calls`: evidence-level target matching.
-- `pcr_sample_calls`: sample-level interpreted calls.
-- `pcr_qc`: run/plate/sample QC flags and statuses.
+- PCRpositive
+- PCRoutcome
+- PCRexplorer
+- PCRpherogram
 
-Core deterministic pipeline:
+## 3. What changed versus the prior audit
 
-raw input -> pcr_peaks -> pcr_assay -> pcr_peak_calls -> pcr_sample_calls -> pcr_qc -> reporting/plots
+Previously identified gaps that are now closed:
 
-## 6. Proposed public API for 1.0.0
+- test suite absent -> comprehensive testthat suite now present
+- CI absent -> GitHub Actions R CMD check workflow present
+- duplicated/uneven validation -> shared validation helpers in place
+- no canonical object model -> implemented
+- no peak/sample/QC evidence tables -> implemented
+- binary-only classification -> three-zone evidence and richer review states implemented
+- no replicate-aware consolidation -> implemented
+- no batch/export layer -> implemented with deterministic file contracts and provenance
 
-Core API candidates:
+## 4. Deterministic interpretation model (current)
 
-- `as_pcr_peaks()` / `validate_pcr_peaks()`
-- `as_pcr_assay()` / `validate_pcr_assay()`
-- `detect_pcr_peaks()`
-- `classify_pcr_samples()`
-- `qc_pcr_run()`
-- `report_pcr_calls()`
+Evidence zones:
 
-Compatibility wrappers retained:
+- below_analytical
+- analytical_to_confirmatory
+- above_confirmatory
 
-- `PCRpositive()`
-- `PCRoutcome()`
-- `PCRexplorer()`
-- `PCRpherogram()`
+Sample call-state taxonomy now includes:
 
-Wrappers should call core pipeline internals and preserve documented behavior where possible.
+- positive
+- negative
+- weak_positive
+- indeterminate_review
+- ambiguous_review
+- hybrid_candidate
+- mixed_profile_candidate
 
-## 7. Deterministic algorithm and limitations
+QC state flags now include (non-exhaustive):
 
-Current deterministic rule:
+- has_missing_well_id
+- duplicate_sample_id_in_run
+- control_sample
+- weak_positive_state
+- ambiguous_call_state
+- indeterminate_call_state
+- contamination_candidate
 
-- positive if `Conc >= threshold` and `Size` in `[target - left_tol, target + right_tol]`.
+## 5. Wrapper compatibility status
 
-Known limitations:
+Compatibility wrappers are still the exported surface and continue to return legacy-style outputs.
 
-- no weak/indeterminate zone;
-- no explicit ambiguity classes;
-- no formal hybrid/mixed profile logic;
-- no control-aware invalid run/sample states;
-- no replicate-aware consolidation.
+Notable behavior-preserving design detail:
 
-## 8. Bayesian extension fit
+- PCRpositive now routes through canonical internals but pre-filters invalid legacy rows (for example, non-positive or missing Size/Conc) to avoid breaking existing usage patterns.
 
-Bayesian layer should be optional and consume core structured outputs:
+## 6. Quality gates and verification status
 
-- inputs: `pcr_peaks`, `pcr_assay`, `pcr_peak_calls`, `pcr_sample_calls`, `pcr_qc`, replicate metadata.
-- outputs: posterior probabilities for biological states and uncertainty decomposition.
+Implemented quality infrastructure:
 
-Precondition: deterministic evidence/QC objects must be stable first.
+- broad testthat coverage across legacy wrappers and new internals/helpers
+- CI workflow for package checks
+- stage manifest and tracking files enforcing sequential completion and gate discipline
 
-## 9. Deployment architecture fit (batch/container/shiny)
+Current known warning debt (non-blocking):
 
-- CLI/Docker and Shiny should call exactly the same core API.
-- No scientific interpretation logic should live in deployment/UI code.
-- Core functions should be deterministic, explicit-input/explicit-output, and side-effect minimal.
+- ggplot2 aes_string deprecation warnings in PCRexplorer/PCRpherogram tests
 
-## 10. Staged issue/PR plan
+No architecture blockers were identified for completion through stage-0.6.
 
-### PR 1 (current): stabilization baseline
+## 7. Architecture fitness assessment
 
-- Add architecture audit document.
-- Add `testthat` infrastructure.
-- Add tests that freeze current `PCRpositive()` behavior.
+Assessment: fit-for-purpose for deterministic, auditable PCR interpretation workflows.
 
-### PR 2: validation consolidation
+Strengths:
 
-- Add shared internal validators for input schema and numeric argument checks.
-- Replace duplicated `stopifnot()` blocks with consistent error messages.
+- clear layered separation from normalization to evidence, calls, QC, and operational outputs
+- machine-readable outputs enabling auditability and downstream automation
+- additive helper layer for batch and exports without duplicating scientific rules
+- retained backward compatibility at wrapper level
 
-### PR 3: canonical object foundations
+Residual risks:
 
-- Add `as_pcr_peaks()` and `as_pcr_assay()` constructors/validators.
-- Add unit tests for schema mapping and validation failures.
+- plotting layer still carries deprecated ggplot idioms
+- internal function naming diverges from earlier 1.0.0 candidate names (for example, pcr_peaks vs as_pcr_peaks); API curation still needed before 1.0.0 freeze
+- contamination/hybrid/mixed logic is deterministic and rule-based; domain calibration/validation may still evolve
 
-### PR 4: evidence and calls
+## 8. Recommended next architecture work (post-0.6)
 
-- Add `detect_pcr_peaks()` and `classify_pcr_samples()` returning stable tibbles.
-- Introduce weak/indeterminate/positive deterministic zones.
+Priority 1:
 
-### PR 5: QC framework
+- plot layer modernization: replace aes_string usage and remove warning debt
 
-- Add `qc_pcr_run()` with machine-readable flags.
-- Add controls and invalid-state handling.
+Priority 2:
 
-### PR 6: wrapper migration and plotting alignment
+- public API curation: decide which canonical functions become exported and stabilize naming/contracts for 1.0.0
 
-- Route legacy wrappers through new core functions.
-- Ensure plotting consumes classified/evidence objects and does not recompute scientific logic.
+Priority 3:
 
-### PR 7+: deployment and optional Bayesian roadmap
+- operational packaging: optional CLI/Docker wrapper standardization on pcr_batch_run/pcr_export_artifacts contracts
 
-- Batch export/report helpers.
-- CLI/Docker wrapper over core API.
-- Shiny review prototype over core API.
-- Optional Bayesian module after deterministic objects and QC are stable.
+Priority 4 (optional, later):
+
+- Bayesian extension as complementary evidence layer consuming stable deterministic objects
+
+## 9. Audit conclusion
+
+The staged architecture plan is implemented through stage-0.6 and materially achieves the original deterministic evidence/QC objectives.
+
+The project has transitioned from a wrapper-centric binary classifier to a layered, test-backed, auditable interpretation engine with reusable operational helpers, while preserving backward-compatible user-facing wrappers.
