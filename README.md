@@ -19,3 +19,16 @@ or
 `githubinstall::githubinstall("PCRprofilR")`
 
 `PCRprofilR` is still under development and beta testing. File an issue if you find a bug.
+
+# Lifecycle
+
+`PCRprofilR` is in pre-1.0 staged development toward a stable deterministic interpretation core.
+
+Current implementation roadmap (high level):
+- `0.2.x`: baseline tests, validation cleanup, CI stabilization
+- `0.3.x`: canonical peak and assay object contracts
+- `0.4.x`: evidence tables, sample calls, QC objects
+- `0.5.x`: deterministic multi-state interpretation rules
+- `0.6.x`: replicate-aware summaries and batch/report helpers
+
+See `NEWS.md` for user-visible changes by stage.

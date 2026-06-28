@@ -51,7 +51,7 @@ stages:
           - S02-03
       - id: S02-05
         file: .github/issues/stage-0.2/05-news-and-lifecycle-scaffold.md
-        status: open
+        status: closed
         depends_on: []
 
   - id: stage-0.3
