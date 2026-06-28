@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PCRprofilR tutorial: from electrophoresis peaks to sample calls</title>
+<style>
+body{max-width:920px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55;color:#222}
+pre{background:#f6f8fa;padding:1rem;overflow:auto;border-radius:4px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+table{border-collapse:collapse}td,th{border:1px solid #ddd;padding:0.25rem 0.5rem}
+img{max-width:100%}
+</style>
+</head>
+<body>
+<hr />
+<h2>title: &quot;PCRprofilR tutorial: from electrophoresis peaks to sample calls&quot;
+output: rmarkdown::html_vignette
+vignette: &gt;
+%\VignetteIndexEntry{PCRprofilR tutorial: from electrophoresis peaks to sample calls}
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteEncoding{UTF-8}</h2>
+<pre><code class="language-r">library(PCRprofilR)
+#&gt; Error in `library()`:
+#&gt; ! there is no package called 'PCRprofilR'
+</code></pre>
+<h2>What this tutorial is for</h2>
+<p>This tutorial shows how to turn a capillary electrophoresis result into an auditable table of PCR sample calls.</p>
+<p>It is written for a laboratory user who may not write R code every day. The important ideas are biological and experimental:</p>
+<ol>
+<li>A PCR assay is designed to produce fragments of known size.</li>
+<li>An electrophoresis instrument reports observed fragments for each sample.</li>
+<li>A sample is interpreted by asking whether an observed fragment is close enough to an expected size and strong enough to be trusted.</li>
+<li>Uncertain cases should be kept visible for review, not hidden inside a forced positive/negative answer.</li>
+</ol>
+<p>The example uses the package data set <code>mosquito</code>, which contains fragment profiles from a PCR assay used to identify members of the <em>Anopheles gambiae</em> species complex (Scott <em>et al.</em> 1993).</p>
+<h2>The result we want</h2>
+<p>At the end of the workflow we want three connected tables:</p>
+<ul>
+<li>a peak evidence table: what each observed fragment says about each assay target;</li>
+<li>a sample call table: the biological interpretation for each sample;</li>
+<li>a QC table: machine-readable flags for controls, ambiguous results, and other cases that need attention.</li>
+</ul>
+<p>These tables can be inspected in R, exported to files, used in a report, or passed later to a batch workflow or review interface.</p>
+<h2>Step 1. Look at the instrument output</h2>
+<p>The data set is already included in the package, so we can load it directly. In a real project, this table would usually come from a CSV or TSV file exported by the electrophoresis instrument software.</p>
+<pre><code class="language-r">data(mosquito)
+#&gt; Warning in data(mosquito): data set 'mosquito' not found
+
+head(mosquito[, c(&quot;WellID&quot;, &quot;SampleID&quot;, &quot;Type&quot;, &quot;Size&quot;, &quot;Conc&quot;)], 8)
+#&gt; Error:
+#&gt; ! object 'mosquito' not found
+</code></pre>
+<p>The important columns are:</p>
+<ul>
+<li><code>WellID</code>: the well on the PCR plate;</li>
+<li><code>SampleID</code>: the sample name;</li>
+<li><code>Size</code>: the observed fragment size in base pairs;</li>
+<li><code>Conc</code>: the observed fragment concentration;</li>
+<li><code>Type</code>: an instrument-specific row type. Some rows are not biological peaks.</li>
+</ul>
+<p>One sample can have several rows because one sample can produce several observed fragments.</p>
+<p>The <code>mosquito</code> data also contain ladder and calibration rows. Those rows are useful to the instrument, but they are not biological peak evidence. Some of them have missing size or concentration values, so they must be removed before we create the canonical peak table.</p>
+<pre><code class="language-r">usable_peak_rows &lt;- with(
+  mosquito,
+  !is.na(Size) &amp;
+    is.finite(Size) &amp;
+    Size &gt; 0 &amp;
+    !is.na(Conc) &amp;
+    is.finite(Conc) &amp;
+    Conc &gt;= 0 &amp;
+    !is.na(WellID) &amp;
+    nzchar(as.character(WellID)) &amp;
+    !is.na(SampleID) &amp;
+    nzchar(as.character(SampleID))
+)
+#&gt; Error:
+#&gt; ! object 'mosquito' not found
+
+table(usable_peak_rows)
+#&gt; Error:
+#&gt; ! object 'usable_peak_rows' not found
+</code></pre>
+<p>Rows marked <code>TRUE</code> are usable peak rows for this tutorial. Rows marked <code>FALSE</code> are not sent to the strict peak interpreter.</p>
+<h2>Step 2. Prepare the peak table</h2>
+<p><code>PCRprofilR</code> uses standard internal column names so that the same interpretation functions can work with different instruments. Here we add a few bookkeeping columns and then keep only usable peak rows.</p>
+<pre><code class="language-r">peaks_input &lt;- transform(
+  mosquito,
+  RunID = &quot;run-1&quot;,
+  PlateID = &quot;plate-1&quot;,
+  PeakID = paste0(&quot;peak-&quot;, seq_len(nrow(mosquito))),
+  RawFile = &quot;mosquito.csv&quot;,
+  Instrument = &quot;labchip&quot;
+)
+#&gt; Error:
+#&gt; ! object 'mosquito' not found
+
+peaks_input &lt;- peaks_input[usable_peak_rows, ]
+#&gt; Error:
+#&gt; ! object 'peaks_input' not found
+
+peaks &lt;- as_pcr_peaks(peaks_input)
+#&gt; Error in `as_pcr_peaks()`:
+#&gt; ! could not find function &quot;as_pcr_peaks&quot;
+
+head(peaks)
+#&gt; Error:
+#&gt; ! object 'peaks' not found
+</code></pre>
+<p>If you see an error saying that <code>size_bp</code> or <code>concentration</code> must be numeric and non-missing, it usually means that non-peak rows, ladder rows, or blank instrument rows were still present in the input.</p>
+<h2>Step 3. Describe the assay</h2>
+<p>The assay specification tells <code>PCRprofilR</code> what fragments are expected.</p>
+<p>For this example, three diagnostic targets are considered:</p>
+<ul>
+<li><em>arabiensis</em>: expected around 315 bp;</li>
+<li><em>gambiae</em>: expected around 390 bp;</li>
+<li><em>melas</em>: expected around 464 bp.</li>
+</ul>
+<p>For each target we give:</p>
+<ul>
+<li>the expected fragment size;</li>
+<li>the accepted size window;</li>
+<li>the minimum concentration for analytical evidence;</li>
+<li>the higher concentration used as stronger confirmatory evidence;</li>
+<li>the biological label returned when the target is detected.</li>
+</ul>
+<pre><code class="language-r">assay &lt;- as_pcr_assay(data.frame(
+  assay_id = c(&quot;species-assay&quot;, &quot;species-assay&quot;, &quot;species-assay&quot;),
+  target_id = c(&quot;arabiensis&quot;, &quot;gambiae&quot;, &quot;melas&quot;),
+  expected_size_bp = c(315, 390, 464),
+  lower_size_bp = c(315, 390, 464),
+  upper_size_bp = c(325, 400, 474),
+  min_concentration = c(0.05, 0.05, 0.05),
+  confirm_concentration = c(0.2, 0.2, 0.2),
+  biological_label = c(&quot;arabiensis&quot;, &quot;gambiae&quot;, &quot;melas&quot;),
+  rule_group = c(&quot;species&quot;, &quot;species&quot;, &quot;species&quot;),
+  target_role = c(&quot;optional&quot;, &quot;optional&quot;, &quot;optional&quot;),
+  stringsAsFactors = FALSE
+))
+#&gt; Error in `as_pcr_assay()`:
+#&gt; ! could not find function &quot;as_pcr_assay&quot;
+
+assay
+#&gt; Error:
+#&gt; ! object 'assay' not found
+</code></pre>
+<p>The <code>target_role</code> column is useful for more complex assays. In this simple species-identification example each target is optional: a sample can match one of them, none of them, or more than one if the profile needs review.</p>
+<h2>Step 4. Compare observed peaks with expected targets</h2>
+<p>The next step creates peak-level evidence. Each observed fragment is compared with each expected target.</p>
+<pre><code class="language-r">peak_calls &lt;- detect_pcr_peaks(peaks, assay)
+#&gt; Error in `detect_pcr_peaks()`:
+#&gt; ! could not find function &quot;detect_pcr_peaks&quot;
+
+head(
+  peak_calls[peak_calls$matched, c(
+    &quot;sample_id&quot;,
+    &quot;target_id&quot;,
+    &quot;size_bp&quot;,
+    &quot;expected_size_bp&quot;,
+    &quot;size_delta_bp&quot;,
+    &quot;concentration&quot;,
+    &quot;evidence_zone&quot;,
+    &quot;matched&quot;
+  )]
+)
+#&gt; Error:
+#&gt; ! object 'peak_calls' not found
+</code></pre>
+<p>The key columns are:</p>
+<ul>
+<li><code>size_delta_bp</code>: how far the observed fragment is from the expected size;</li>
+<li><code>evidence_zone</code>: whether the concentration is below the analytical threshold, between analytical and confirmatory thresholds, or above the confirmatory threshold;</li>
+<li><code>matched</code>: whether the observed peak is both inside the size window and above the analytical concentration threshold.</li>
+</ul>
+<p>This table is the audit trail. The final sample calls are derived from it.</p>
+<h2>Step 5. Turn evidence into sample calls</h2>
+<p>Now we summarize the peak evidence sample by sample.</p>
+<pre><code class="language-r">sample_calls &lt;- classify_pcr_samples(peak_calls)
+#&gt; Error in `classify_pcr_samples()`:
+#&gt; ! could not find function &quot;classify_pcr_samples&quot;
+
+head(sample_calls[, c(
+  &quot;well_id&quot;,
+  &quot;sample_id&quot;,
+  &quot;call&quot;,
+  &quot;call_state&quot;,
+  &quot;matched_targets&quot;,
+  &quot;rule_status&quot;,
+  &quot;review_required&quot;
+)])
+#&gt; Error:
+#&gt; ! object 'sample_calls' not found
+</code></pre>
+<p><code>call</code> is the simple positive/negative field. <code>call_state</code> is the field to read when you want the real interpretation status.</p>
+<pre><code class="language-r">table(sample_calls$call_state)
+#&gt; Error:
+#&gt; ! object 'sample_calls' not found
+</code></pre>
+<p>The main call states are:</p>
+<ul>
+<li><code>positive</code>: clear evidence above the confirmatory threshold;</li>
+<li><code>negative</code>: no target evidence;</li>
+<li><code>weak_positive</code>: target evidence above the analytical threshold but below the confirmatory threshold;</li>
+<li><code>indeterminate_review</code>: a trace is inside the expected size window but below the analytical threshold;</li>
+<li><code>ambiguous_review</code>: the pattern conflicts with the assay rules;</li>
+<li><code>hybrid_candidate</code> or <code>mixed_profile_candidate</code>: several biological labels are detected and the profile should be reviewed.</li>
+</ul>
+<p>The important habit is to treat review states as part of the result, not as errors to be discarded.</p>
+<h2>Step 6. Add quality-control flags</h2>
+<p>QC is not separate from interpretation. A call is easier to trust when the sample, controls, and run metadata are also consistent.</p>
+<pre><code class="language-r">qc &lt;- qc_pcr_run(peaks, sample_calls)
+#&gt; Error in `qc_pcr_run()`:
+#&gt; ! could not find function &quot;qc_pcr_run&quot;
+
+head(qc[, c(
+  &quot;well_id&quot;,
+  &quot;sample_id&quot;,
+  &quot;control_role&quot;,
+  &quot;qc_status&quot;,
+  &quot;contamination_candidate&quot;,
+  &quot;duplicate_sample_id_in_run&quot;
+)])
+#&gt; Error:
+#&gt; ! object 'qc' not found
+</code></pre>
+<pre><code class="language-r">table(qc$qc_status)
+#&gt; Error:
+#&gt; ! object 'qc' not found
+</code></pre>
+<p><code>qc_status</code> is deliberately simple:</p>
+<ul>
+<li><code>pass</code>: no machine-readable QC problem was detected;</li>
+<li><code>review</code>: the result should be inspected;</li>
+<li><code>fail</code>: the result should not be accepted without resolving the QC problem.</li>
+</ul>
+<p>More detailed columns explain why a sample was flagged.</p>
+<h2>Step 7. Plot the classified evidence</h2>
+<p>The modern plotting helper consumes the evidence and call objects that were already computed. It does not recalculate positivity rules inside the plot.</p>
+<pre><code class="language-r">plot_pcr_evidence(peak_calls, sample_calls = sample_calls, qc = qc)
+#&gt; Error in `plot_pcr_evidence()`:
+#&gt; ! could not find function &quot;plot_pcr_evidence&quot;
+</code></pre>
+<p>This plot is useful for review because the points are colored by the evidence zone already assigned by the deterministic interpreter.</p>
+<h2>Step 8. Summarize repeated tests</h2>
+<p>If the same biological sample is tested several times, the replicate summary can show whether the repeated calls agree. The example data do not contain a full replicate design, but the function works on the same sample-call and QC tables.</p>
+<pre><code class="language-r">replicate_summary &lt;- summarize_pcr_replicates(sample_calls, qc = qc)
+#&gt; Error in `summarize_pcr_replicates()`:
+#&gt; ! could not find function &quot;summarize_pcr_replicates&quot;
+
+head(replicate_summary)
+#&gt; Error:
+#&gt; ! object 'replicate_summary' not found
+</code></pre>
+<p>For real replicate designs, choose <code>replicate_keys</code> so that repeated wells, plates, or runs are grouped under the same biological sample identifier.</p>
+<h2>Step 9. Export reproducible results</h2>
+<p>For routine work, the outputs should be written to files rather than copied by hand from the console. The export helper writes the evidence table, the sample call table, the QC table, and a simple summary report.</p>
+<p>The code below is not run when the vignette is built because it writes files to an output directory.</p>
+<pre><code class="language-r">report_out &lt;- report_pcr_calls(
+  peak_calls = peak_calls,
+  sample_calls = sample_calls,
+  qc = qc,
+  output_dir = &quot;pcr-results&quot;,
+  format = &quot;csv&quot;,
+  write_summary = TRUE
+)
+</code></pre>
+<p>For command-line or container workflows, <code>run_pcr_batch()</code> performs the same kind of deterministic interpretation from input files:</p>
+<pre><code class="language-r">batch_out &lt;- run_pcr_batch(
+  peaks_path = &quot;peaks.csv&quot;,
+  assay_path = &quot;assay.csv&quot;,
+  output_dir = &quot;pcr-results&quot;
+)
+</code></pre>
+<p>The scientific logic is the same. Batch mode is only a different way to run the same core functions.</p>
+<h2>Optional: visual threshold exploration</h2>
+<p>Sometimes you do not yet know which size tolerance or concentration threshold is reasonable for a new assay or instrument. The legacy exploratory helpers are still useful for that stage.</p>
+<pre><code class="language-r">targets &lt;- c(arabiensis = 315, gambiae = 390, melas = 464)
+
+PCRexplorer(
+  mosquito,
+  targets,
+  tolerance = c(0, 10),
+  threshold = 0.05,
+  xlimits = c(300, 500),
+  logy = TRUE,
+  join = TRUE,
+  control = &quot;CTR&quot;
+)
+#&gt; Error in `PCRexplorer()`:
+#&gt; ! could not find function &quot;PCRexplorer&quot;
+</code></pre>
+<p><code>PCRexplorer()</code> helps you inspect the raw run. Once the assay settings are chosen, use the canonical workflow above for reproducible evidence, calls, QC, plots, and exports.</p>
+<h2>A minimal complete script</h2>
+<p>This is the same workflow without the teaching text.</p>
+<pre><code class="language-r">library(PCRprofilR)
+
+data(mosquito)
+
+peaks_input &lt;- transform(
+  mosquito,
+  RunID = &quot;run-1&quot;,
+  PlateID = &quot;plate-1&quot;,
+  PeakID = paste0(&quot;peak-&quot;, seq_len(nrow(mosquito))),
+  RawFile = &quot;mosquito.csv&quot;,
+  Instrument = &quot;labchip&quot;
+)
+
+usable_peak_rows &lt;- with(
+  peaks_input,
+  !is.na(Size) &amp;
+    is.finite(Size) &amp;
+    Size &gt; 0 &amp;
+    !is.na(Conc) &amp;
+    is.finite(Conc) &amp;
+    Conc &gt;= 0 &amp;
+    !is.na(WellID) &amp;
+    nzchar(as.character(WellID)) &amp;
+    !is.na(SampleID) &amp;
+    nzchar(as.character(SampleID))
+)
+
+peaks &lt;- as_pcr_peaks(peaks_input[usable_peak_rows, ])
+
+assay &lt;- as_pcr_assay(data.frame(
+  assay_id = c(&quot;species-assay&quot;, &quot;species-assay&quot;, &quot;species-assay&quot;),
+  target_id = c(&quot;arabiensis&quot;, &quot;gambiae&quot;, &quot;melas&quot;),
+  expected_size_bp = c(315, 390, 464),
+  lower_size_bp = c(315, 390, 464),
+  upper_size_bp = c(325, 400, 474),
+  min_concentration = c(0.05, 0.05, 0.05),
+  confirm_concentration = c(0.2, 0.2, 0.2),
+  biological_label = c(&quot;arabiensis&quot;, &quot;gambiae&quot;, &quot;melas&quot;),
+  rule_group = c(&quot;species&quot;, &quot;species&quot;, &quot;species&quot;),
+  target_role = c(&quot;optional&quot;, &quot;optional&quot;, &quot;optional&quot;),
+  stringsAsFactors = FALSE
+))
+
+peak_calls &lt;- detect_pcr_peaks(peaks, assay)
+sample_calls &lt;- classify_pcr_samples(peak_calls)
+qc &lt;- qc_pcr_run(peaks, sample_calls)
+replicate_summary &lt;- summarize_pcr_replicates(sample_calls, qc = qc)
+</code></pre>
+<h2>Reference</h2>
+<p>Scott, J. A., Brogdon, W. G., and Collins, F. H. (1993). Identification of single specimens of the <em>Anopheles gambiae</em> complex by the Polymerase Chain Reaction. <em>The American Journal of Tropical Medicine and Hygiene</em>, <strong>49</strong>(4), 520-529.</p>
+
+</body>
+</html>

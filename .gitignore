@@ -7,7 +7,6 @@
 # R package build/check artifacts
 /*.Rcheck/
 /*.tar.gz
-/inst/doc/
 /doc/
 /Meta/
 
