@@ -200,7 +200,7 @@ stages:
           - S05-03
       - id: S07-06
         file: .github/issues/stage-0.7/06-plots-consume-classified-objects.md
-        status: open
+        status: closed
         depends_on:
           - S07-05
           - S06-03

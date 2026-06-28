@@ -24,3 +24,4 @@
 - Added explicit QC control-role semantics for positive controls, negative controls, no-template controls, and blanks while retaining legacy sample-name inference as a fallback.
 - Added an explicit `allow_qc_issues` review path so missing or malformed well identifiers can be retained as machine-readable QC failures while strict canonical validation remains the default.
 - Made `rule_group` operational through optional assay `target_role` values (`required`, `optional`, `forbidden`) and added rule-status evidence fields to sample calls; compatible multi-target same-label profiles now resolve as positives instead of ambiguous reviews.
+- Added `plot_pcr_evidence()` as a classified-object plotting path that consumes peak evidence, sample calls, and QC objects without recomputing positivity rules.

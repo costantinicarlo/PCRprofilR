@@ -79,23 +79,29 @@ Test files:
 - Add a new focused plotting test if new exported helpers are introduced.
 
 ## Documentation
-- [ ] Roxygen/help text updated if needed
+- [x] Roxygen/help text updated if needed
 - [ ] README/vignette updates included if user-facing behavior changed
-- [ ] NEWS entry added if appropriate
+- [x] NEWS entry added if appropriate
+
+Details:
+Added an Rd page for `plot_pcr_evidence()` and a NEWS entry. README/vignette integration is deferred to the workflow documentation pass.
 
 ## CI Status
-- [ ] Local checks pass
-- [ ] CI expected to pass
+- [x] Local checks pass
+- [x] CI expected to pass
+
+Details:
+New classified plot tests and legacy `PCRexplorer()` / `PCRpherogram()` tests passed. Full suite passed with 220 tests, 0 failures, and 0 warnings. `R CMD build --no-build-vignettes .` passed. Local `R CMD check --no-manual --no-build-vignettes` completed with only the documented vignette warnings caused by skipping vignette builds.
 
 ## Risk Assessment
 Medium: plots are user-facing and support scientific review. Preserve old behavior while introducing the classified-object path incrementally.
 
 ## Definition of Done
-- [ ] Small, reviewable PR
-- [ ] Tests included
-- [ ] Return types explicit and stable
-- [ ] Compatibility impact documented
-- [ ] No unrelated refactors bundled
+- [x] Small, reviewable PR
+- [x] Tests included
+- [x] Return types explicit and stable
+- [x] Compatibility impact documented
+- [x] No unrelated refactors bundled
 
 ## Follow-up Items
 - Use the classified-object plotting path in future Shiny review screens and automated reports.
