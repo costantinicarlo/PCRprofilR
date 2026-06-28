@@ -148,12 +148,12 @@ stages:
           - S04-03
       - id: S06-02
         file: .github/issues/stage-0.6/02-batch-cli-input-output-helpers.md
-        status: open
+        status: closed
         depends_on:
           - S04-04
       - id: S06-03
         file: .github/issues/stage-0.6/03-report-export-helpers.md
-        status: open
+        status: in_progress
         depends_on:
           - S06-02
 

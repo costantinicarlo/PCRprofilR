@@ -17,3 +17,4 @@
 - Added explicit internal call states (`weak_positive`, `ambiguous_review`, `indeterminate_review`) and corresponding machine-readable QC review flags.
 - Added deterministic `hybrid_candidate` and `mixed_profile_candidate` sample states and QC `contamination_candidate` hooks for positive controls and duplicate review patterns.
 - Added `pcr_replicate_summary()` to deterministically aggregate replicate call-state/QC outcomes into concordant/discordant consensus summaries.
+- Added `pcr_batch_run()` file-based orchestration helper to run normalization, canonical calls, and QC and write reproducible batch artifacts.
