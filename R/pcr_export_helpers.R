@@ -68,10 +68,10 @@ pcr_export_artifacts <- function(peak_calls, sample_calls, qc, output_dir, forma
             paste0("package_version: ", as.character(utils::packageVersion("PCRprofilR"))),
             "",
             "call_state_counts:",
-            paste(capture.output(print(call_states)), collapse = "\n"),
+            paste(utils::capture.output(print(call_states)), collapse = "\n"),
             "",
             "qc_status_counts:",
-            paste(capture.output(print(qc_states)), collapse = "\n")
+            paste(utils::capture.output(print(qc_states)), collapse = "\n")
         )
         writeLines(summary_lines, con = summary_file)
     }

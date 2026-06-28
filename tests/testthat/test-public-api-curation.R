@@ -15,6 +15,28 @@ test_that("curated public API exports are available", {
     ) %in% exports))
 })
 
+test_that("curated public API exports are documented", {
+    doc_lines <- readLines(
+        testthat::test_path("..", "..", "man", "pcr_public_api.Rd"),
+        warn = FALSE
+    )
+
+    expected_aliases <- paste0("\\alias{", c(
+        "as_pcr_peaks",
+        "as_pcr_assay",
+        "validate_pcr_peaks",
+        "validate_pcr_assay",
+        "detect_pcr_peaks",
+        "classify_pcr_samples",
+        "qc_pcr_run",
+        "summarize_pcr_replicates",
+        "run_pcr_batch",
+        "report_pcr_calls"
+    ), "}")
+
+    expect_true(all(expected_aliases %in% doc_lines))
+})
+
 test_that("curated API functions compose into deterministic pipeline", {
     peaks_raw <- data.frame(
         RunID = c("run-1", "run-1"),
