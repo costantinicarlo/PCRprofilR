@@ -61,3 +61,56 @@ test_that("curated API functions compose into deterministic pipeline", {
     expect_s3_class(export_out, "pcr_export_artifacts")
     expect_true(all(file.exists(export_out$files)))
 })
+
+test_that("curated API quickstart example accepts filtered mosquito peaks", {
+    data(mosquito)
+
+    peaks_raw <- transform(
+        mosquito,
+        RunID = "run-1",
+        PlateID = "plate-1",
+        PeakID = paste0("peak-", seq_len(nrow(mosquito))),
+        RawFile = "mosquito.csv",
+        Instrument = "labchip"
+    )
+
+    peaks_raw <- subset(
+        peaks_raw,
+        !is.na(Size) &
+            is.finite(Size) &
+            Size > 0 &
+            !is.na(Conc) &
+            is.finite(Conc) &
+            Conc >= 0 &
+            !is.na(WellID) &
+            nzchar(as.character(WellID)) &
+            !is.na(SampleID) &
+            nzchar(as.character(SampleID))
+    )
+
+    assay <- as_pcr_assay(data.frame(
+        assay_id = c("species-assay", "species-assay", "species-assay"),
+        target_id = c("arabiensis", "gambiae", "melas"),
+        expected_size_bp = c(315, 390, 464),
+        lower_size_bp = c(315, 390, 464),
+        upper_size_bp = c(325, 400, 474),
+        min_concentration = c(0.05, 0.05, 0.05),
+        confirm_concentration = c(0.2, 0.2, 0.2),
+        biological_label = c("arabiensis", "gambiae", "melas"),
+        rule_group = c("species", "species", "species"),
+        stringsAsFactors = FALSE
+    ))
+
+    peaks <- as_pcr_peaks(peaks_raw)
+    peak_calls <- detect_pcr_peaks(peaks, assay)
+    sample_calls <- classify_pcr_samples(peak_calls)
+    qc <- qc_pcr_run(peaks, sample_calls)
+
+    expect_s3_class(peaks, "pcr_peaks")
+    expect_s3_class(peak_calls, "pcr_peak_calls")
+    expect_s3_class(sample_calls, "pcr_sample_calls")
+    expect_s3_class(qc, "pcr_qc")
+    expect_gt(nrow(sample_calls), 0)
+    expect_true(all(c("sample_id", "call", "call_state", "threshold_status") %in% names(sample_calls)))
+    expect_true(all(c("sample_id", "qc_status", "contamination_candidate") %in% names(qc)))
+})

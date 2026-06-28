@@ -59,6 +59,20 @@ peaks_input <- transform(
   Instrument = "labchip"
 )
 
+peaks_input <- subset(
+  peaks_input,
+  !is.na(Size) &
+    is.finite(Size) &
+    Size > 0 &
+    !is.na(Conc) &
+    is.finite(Conc) &
+    Conc >= 0 &
+    !is.na(WellID) &
+    nzchar(as.character(WellID)) &
+    !is.na(SampleID) &
+    nzchar(as.character(SampleID))
+)
+
 peaks <- as_pcr_peaks(peaks_input)
 
 assay <- as_pcr_assay(data.frame(
