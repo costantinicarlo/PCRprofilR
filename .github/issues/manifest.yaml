@@ -134,7 +134,7 @@ stages:
 
   - id: stage-0.6
     tracking_file: .github/issues/stage-0.6/TRACKING.md
-    status: open
+    status: in_progress
     completion_gates:
       - batch_helpers_use_core_objects
       - replicate_summaries_deterministic_and_tested
@@ -142,7 +142,7 @@ stages:
     issues:
       - id: S06-01
         file: .github/issues/stage-0.6/01-replicate-aware-deterministic-summary.md
-        status: open
+        status: closed
         depends_on:
           - S04-02
           - S04-03

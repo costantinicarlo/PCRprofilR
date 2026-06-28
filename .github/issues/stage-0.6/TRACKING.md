@@ -3,11 +3,11 @@
 Goal: add reproducible operational workflows on top of deterministic core.
 
 Checklist:
-- [ ] 01-replicate-aware-deterministic-summary.md
+- [x] 01-replicate-aware-deterministic-summary.md
 - [ ] 02-batch-cli-input-output-helpers.md
 - [ ] 03-report-export-helpers.md
 
 Stage completion gates:
 - [ ] Batch helpers use core objects, not duplicate logic
-- [ ] Replicate summaries deterministic and tested
+- [x] Replicate summaries deterministic and tested
 - [ ] Export helpers preserve provenance and QC flags
