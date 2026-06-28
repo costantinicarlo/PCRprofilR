@@ -30,12 +30,18 @@ validate_pcr_peaks <- function(x, allow_qc_issues = FALSE) {
         )
     }
 
-    if (!is.numeric(x$size_bp) || any(is.na(x$size_bp)) || any(x$size_bp <= 0)) {
-        stop("pcr_peaks column 'size_bp' must be numeric and strictly positive", call. = FALSE)
+    if (!is.numeric(x$size_bp) || any(is.na(x$size_bp)) || any(!is.finite(x$size_bp)) || any(x$size_bp <= 0)) {
+        stop(
+            "pcr_peaks column 'size_bp' must be numeric, non-missing, finite, and strictly positive; remove ladder/calibration/non-peak rows before calling as_pcr_peaks()",
+            call. = FALSE
+        )
     }
 
-    if (!is.numeric(x$concentration) || any(is.na(x$concentration)) || any(x$concentration < 0)) {
-        stop("pcr_peaks column 'concentration' must be numeric and non-negative", call. = FALSE)
+    if (!is.numeric(x$concentration) || any(is.na(x$concentration)) || any(!is.finite(x$concentration)) || any(x$concentration < 0)) {
+        stop(
+            "pcr_peaks column 'concentration' must be numeric, non-missing, finite, and non-negative; remove ladder/calibration/non-peak rows before calling as_pcr_peaks()",
+            call. = FALSE
+        )
     }
 
     id_cols <- c("run_id", "plate_id", "sample_id", "peak_id", "raw_file", "instrument")

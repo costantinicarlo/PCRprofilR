@@ -55,6 +55,13 @@ test_that("pcr_peaks validates numeric constraints", {
     dat$size_bp <- 390
     dat$concentration <- -0.1
     expect_error(PCRprofilR:::pcr_peaks(dat), "concentration")
+
+    dat$concentration <- 0.25
+    dat$size_bp <- NA_real_
+    expect_error(PCRprofilR:::pcr_peaks(dat), "remove ladder/calibration/non-peak rows")
+
+    dat$size_bp <- Inf
+    expect_error(PCRprofilR:::pcr_peaks(dat), "finite")
 })
 
 test_that("pcr_peaks coerces factor identifiers to character", {
