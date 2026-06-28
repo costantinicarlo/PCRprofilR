@@ -44,7 +44,7 @@ stages:
         depends_on: []
       - id: S02-04
         file: .github/issues/stage-0.2/04-ci-rcmdcheck-testthat.md
-        status: open
+        status: closed
         depends_on:
           - S02-01
           - S02-02
