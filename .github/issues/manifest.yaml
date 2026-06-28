@@ -68,7 +68,7 @@ stages:
         depends_on: []
       - id: S03-02
         file: .github/issues/stage-0.3/02-pcr-assay-schema-validator.md
-        status: open
+        status: closed
         depends_on: []
       - id: S03-03
         file: .github/issues/stage-0.3/03-import-column-mapping-normalization.md
