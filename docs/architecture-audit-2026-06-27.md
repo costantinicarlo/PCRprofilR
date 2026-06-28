@@ -99,7 +99,7 @@ Implemented quality infrastructure:
 
 Current known warning debt (non-blocking):
 
-- ggplot2 aes_string deprecation warnings in PCRexplorer/PCRpherogram tests
+- none in current automated test runs
 
 No architecture blockers were identified for completion through stage-0.6.
 
@@ -116,7 +116,6 @@ Strengths:
 
 Residual risks:
 
-- plotting layer still carries deprecated ggplot idioms
 - internal function naming diverges from earlier 1.0.0 candidate names (for example, pcr_peaks vs as_pcr_peaks); API curation still needed before 1.0.0 freeze
 - contamination/hybrid/mixed logic is deterministic and rule-based; domain calibration/validation may still evolve
 
@@ -124,7 +123,7 @@ Residual risks:
 
 Priority 1:
 
-- plot layer modernization: replace aes_string usage and remove warning debt
+- completed on 2026-06-28: plot layer modernized by replacing deprecated aes_string usage in PCRexplorer/PCRpherogram; warning debt removed in test runs
 
 Priority 2:
 

@@ -35,11 +35,11 @@ PCRpherogram <- function(dat, target_size, tolerance, threshold) {
 
   ggplot2::ggplot(plot_dat) +
     ggplot2::geom_vline(ggplot2::aes(xintercept = target_size), alpha = .1) +
-    ggplot2::geom_text(ggplot2::aes_string(label = "SampleID"),
+    ggplot2::geom_text(ggplot2::aes(label = .data$SampleID),
       x = 0, y = 5,
       hjust = "left", vjust = "top", size = 3
     ) +
-    ggplot2::geom_col(ggplot2::aes_string(x = "Size", y = "Conc", col = "outcome", alpha = "alpha_col"), show.legend = FALSE) +
+    ggplot2::geom_col(ggplot2::aes(x = .data$Size, y = .data$Conc, col = .data$outcome, alpha = .data$alpha_col), show.legend = FALSE) +
     ggplot2::ggtitle(paste("Target Amplicon Size =", target_size, "bp *** Tolerance =", r[1L], "-", r[2L], " bp *** Threshold =", threshold, "ng/uL")) +
     ggplot2::scale_x_continuous(trans = "log2") +
     ggplot2::scale_y_continuous(trans = "sqrt") +

@@ -79,22 +79,22 @@ PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx =
   if (!is.null(tolerance) && !is.null(threshold)) {
     p <- p + ggplot2::geom_rect(
       data = tiles,
-      ggplot2::aes_string(xmin = "xmin_", xmax = "xmax_", ymin = "ymin_", ymax = "ymax_"), fill = "lightblue", alpha = .5
+      ggplot2::aes(xmin = .data$xmin_, xmax = .data$xmax_, ymin = .data$ymin_, ymax = .data$ymax_), fill = "lightblue", alpha = .5
     )
   }
 
-  p <- p + ggplot2::geom_point(ggplot2::aes_string(x = "Size", y = "Conc"), size = 4, col = "red", alpha = .3)
+  p <- p + ggplot2::geom_point(ggplot2::aes(x = .data$Size, y = .data$Conc), size = 4, col = "red", alpha = .3)
 
   if (logx) p <- p + ggplot2::scale_x_log10()
   if (logy) p <- p + ggplot2::scale_y_log10()
 
   if (!is.null(xlimits)) p <- p + ggplot2::xlim(c(xlimits[1], xlimits[2]))
 
-  if (join) p <- p + ggplot2::geom_line(ggplot2::aes_string(x = "Size", y = "Conc", group = "SampleID"), col = "orange", lwd = .75, lty = 3)
+  if (join) p <- p + ggplot2::geom_line(ggplot2::aes(x = .data$Size, y = .data$Conc, group = .data$SampleID), col = "orange", lwd = .75, lty = 3)
   if (!is.null(control)) {
     p <- p + ggplot2::geom_line(
       data = dat[dat$SampleID == control, , drop = FALSE],
-      ggplot2::aes_string(x = "Size", y = "Conc", group = "SampleID"), lwd = .75, lty = 2
+      ggplot2::aes(x = .data$Size, y = .data$Conc, group = .data$SampleID), lwd = .75, lty = 2
     )
   }
 
