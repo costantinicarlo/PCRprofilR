@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="assets/PCRprofilR_logo_hex.png"
+       alt="panpreposterous logo"
+       width="420">
+</p>
+
 # PCRprofilR
 
 PCRprofilR is an R package for deterministic, auditable interpretation of PCR fragment profiles from capillary electrophoresis outputs.
