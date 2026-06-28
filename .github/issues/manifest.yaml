@@ -72,7 +72,7 @@ stages:
         depends_on: []
       - id: S03-03
         file: .github/issues/stage-0.3/03-import-column-mapping-normalization.md
-        status: open
+        status: closed
         depends_on:
           - S03-01
 
