@@ -18,7 +18,7 @@ PCRprofilR is currently distributed from GitHub.
 
 ```r
 install.packages("devtools")
-devtools::install_github("carlocostantini/PCRprofilR")
+devtools::install_github("costantinicarlo/PCRprofilR")
 ```
 
 ## Public API (current)
