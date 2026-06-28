@@ -56,7 +56,7 @@ stages:
 
   - id: stage-0.3
     tracking_file: .github/issues/stage-0.3/TRACKING.md
-    status: in_progress
+    status: completed
     completion_gates:
       - constructors_and_validators_documented
       - object_contract_tests_passing
@@ -78,8 +78,7 @@ stages:
 
   - id: stage-0.4
     tracking_file: .github/issues/stage-0.4/TRACKING.md
-    status: blocked
-    blocked_by_stage: stage-0.3
+    status: in_progress
     completion_gates:
       - pcr_peak_calls_pcr_sample_calls_pcr_qc_operational
       - public_api_usable
@@ -87,7 +86,7 @@ stages:
     issues:
       - id: S04-01
         file: .github/issues/stage-0.4/01-pcr-peak-calls-evidence-table.md
-        status: open
+        status: closed
         depends_on:
           - S03-01
           - S03-02
