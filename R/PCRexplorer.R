@@ -24,7 +24,8 @@
 #' threshold <- 0.05
 #'
 #' PCRexplorer(mosquito, targets, tolerance, threshold,
-#'   logx = TRUE, logy = TRUE, join = TRUE, control = "CTR")
+#'   logx = TRUE, logy = TRUE, join = TRUE, control = "CTR"
+#' )
 #'
 PCRexplorer <- function(dat, targets, tolerance = NULL, threshold = NULL, logx = FALSE, logy = FALSE, xlimits = NULL, join = FALSE, control = NULL) {
   .assert_dat(dat)
