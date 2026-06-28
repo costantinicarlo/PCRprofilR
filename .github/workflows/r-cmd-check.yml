@@ -25,6 +25,10 @@ jobs:
             any::knitr
           needs: check
 
+      - name: Ensure vignette deps are installed
+        run: |
+          Rscript -e "install.packages(c('rmarkdown','knitr'), repos='https://cloud.r-project.org')"
+
       - name: Check
         uses: r-lib/actions/check-r-package@v2
         with:
