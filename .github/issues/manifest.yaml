@@ -36,7 +36,7 @@ stages:
         depends_on: []
       - id: S02-02
         file: .github/issues/stage-0.2/02-baseline-tests-visual-functions.md
-        status: open
+        status: closed
         depends_on: []
       - id: S02-03
         file: .github/issues/stage-0.2/03-validation-error-consistency.md
