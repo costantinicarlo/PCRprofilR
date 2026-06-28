@@ -19,6 +19,28 @@ test_that("pcr_assay constructor returns validated canonical object", {
     expect_equal(out$confirm_concentration, 0.2)
 })
 
+test_that("validate_pcr_assay accepts constructor-compatible optional confirm concentration", {
+    dat <- data.frame(
+        assay_id = "assay-1",
+        target_id = "target-a",
+        expected_size_bp = 390,
+        lower_size_bp = 380,
+        upper_size_bp = 400,
+        min_concentration = 0.2,
+        biological_label = "gambiae",
+        rule_group = "species",
+        stringsAsFactors = FALSE
+    )
+
+    expect_silent(validate_pcr_assay(dat))
+
+    dat$confirm_concentration <- 0.3
+    expect_silent(validate_pcr_assay(dat))
+
+    dat$confirm_concentration <- 0.1
+    expect_error(validate_pcr_assay(dat), "confirm_concentration")
+})
+
 test_that("pcr_assay reports missing required columns", {
     dat <- data.frame(
         assay_id = "assay-1",

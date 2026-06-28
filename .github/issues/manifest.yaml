@@ -176,7 +176,7 @@ stages:
           - S06-03
       - id: S07-02
         file: .github/issues/stage-0.7/02-align-assay-validator-constructor.md
-        status: open
+        status: closed
         depends_on:
           - S03-02
       - id: S07-03

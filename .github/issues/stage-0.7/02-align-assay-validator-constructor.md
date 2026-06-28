@@ -82,19 +82,25 @@ Test files:
 - [ ] README/vignette updates included if user-facing behavior changed
 - [ ] NEWS entry added if appropriate
 
+Details:
+No user-facing documentation update was required; this is a compatibility fix aligning the exported validator with documented constructor behavior.
+
 ## CI Status
-- [ ] Local checks pass
-- [ ] CI expected to pass
+- [x] Local checks pass
+- [x] CI expected to pass
+
+Details:
+`test-pcr-assay.R`, `test-public-api-curation.R`, and the full test suite passed. Full suite result: 170 passing tests, 0 failures, 0 warnings.
 
 ## Risk Assessment
 Low to medium: assay validation is foundational, so keep the diff narrow and test constructor, validator, and public alias behavior together.
 
 ## Definition of Done
-- [ ] Small, reviewable PR
-- [ ] Tests included
-- [ ] Return types explicit and stable
-- [ ] Compatibility impact documented
-- [ ] No unrelated refactors bundled
+- [x] Small, reviewable PR
+- [x] Tests included
+- [x] Return types explicit and stable
+- [x] Compatibility impact documented
+- [x] No unrelated refactors bundled
 
 ## Follow-up Items
 - Add explicit control-role assay fields after validator semantics are stable.

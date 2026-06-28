@@ -25,6 +25,10 @@ validate_pcr_assay <- function(x) {
         )
     }
 
+    if (!"confirm_concentration" %in% names(x)) {
+        x$confirm_concentration <- x$min_concentration
+    }
+
     numeric_cols <- c("expected_size_bp", "lower_size_bp", "upper_size_bp", "min_concentration", "confirm_concentration")
     for (col in numeric_cols) {
         if (!is.numeric(x[[col]]) || any(is.na(x[[col]]))) {
@@ -68,16 +72,17 @@ validate_pcr_assay <- function(x) {
 pcr_assay <- function(dat) {
     x <- tibble::as_tibble(dat)
 
-    if (!"confirm_concentration" %in% names(x)) {
-        x$confirm_concentration <- x$min_concentration
-    }
-
     id_cols <- c("assay_id", "target_id", "biological_label", "rule_group")
     for (col in intersect(id_cols, names(x))) {
         x[[col]] <- as.character(x[[col]])
     }
 
     validate_pcr_assay(x)
+
+    if (!"confirm_concentration" %in% names(x)) {
+        x$confirm_concentration <- x$min_concentration
+    }
+
     class(x) <- c("pcr_assay", class(x))
     x
 }
