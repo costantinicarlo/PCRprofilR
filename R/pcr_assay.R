@@ -66,16 +66,32 @@ validate_pcr_assay <- function(x) {
         }
     }
 
+    if ("target_role" %in% names(x)) {
+        allowed_roles <- c("required", "optional", "forbidden")
+        if (!is.character(x$target_role) || any(is.na(x$target_role)) || any(!x$target_role %in% allowed_roles)) {
+            stop(
+                sprintf("pcr_assay column 'target_role' must contain only: %s", paste(allowed_roles, collapse = ", ")),
+                call. = FALSE
+            )
+        }
+    }
+
     invisible(x)
 }
 
 pcr_assay <- function(dat) {
     x <- tibble::as_tibble(dat)
 
-    id_cols <- c("assay_id", "target_id", "biological_label", "rule_group")
+    if (!"target_role" %in% names(x)) {
+        x$target_role <- "optional"
+    }
+
+    id_cols <- c("assay_id", "target_id", "biological_label", "rule_group", "target_role")
     for (col in intersect(id_cols, names(x))) {
         x[[col]] <- as.character(x[[col]])
     }
+
+    x$target_role <- tolower(x$target_role)
 
     validate_pcr_assay(x)
 

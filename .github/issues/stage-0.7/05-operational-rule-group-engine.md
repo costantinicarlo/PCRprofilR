@@ -82,21 +82,27 @@ Test files:
 ## Documentation
 - [ ] Roxygen/help text updated if needed
 - [ ] README/vignette updates included if user-facing behavior changed
-- [ ] NEWS entry added if appropriate
+- [x] NEWS entry added if appropriate
+
+Details:
+Added a NEWS entry for optional assay `target_role` semantics and the intentional compatible multi-target same-label positive behavior. Broader vignette explanation is deferred to the workflow documentation pass.
 
 ## CI Status
-- [ ] Local checks pass
-- [ ] CI expected to pass
+- [x] Local checks pass
+- [x] CI expected to pass
+
+Details:
+Focused rule, assay, wrapper, and public API tests passed. Full suite passed with 215 tests, 0 failures, and 0 warnings.
 
 ## Risk Assessment
 High: rule precedence defines scientific interpretation. Keep the initial rule contract minimal, deterministic, and heavily tested.
 
 ## Definition of Done
-- [ ] Small, reviewable PR
-- [ ] Tests included
-- [ ] Return types explicit and stable
-- [ ] Compatibility impact documented
-- [ ] No unrelated refactors bundled
+- [x] Small, reviewable PR
+- [x] Tests included
+- [x] Return types explicit and stable
+- [x] Compatibility impact documented
+- [x] No unrelated refactors bundled
 
 ## Follow-up Items
 - Use the rule layer as the only scientific interpretation source for future reports, Docker, Shiny, and Bayesian evidence consumers.

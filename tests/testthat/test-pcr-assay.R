@@ -17,6 +17,7 @@ test_that("pcr_assay constructor returns validated canonical object", {
     expect_equal(out$expected_size_bp, 390)
     expect_equal(out$min_concentration, 0.2)
     expect_equal(out$confirm_concentration, 0.2)
+    expect_equal(out$target_role, "optional")
 })
 
 test_that("validate_pcr_assay accepts constructor-compatible optional confirm concentration", {
@@ -79,6 +80,10 @@ test_that("pcr_assay enforces numeric and interval constraints", {
     dat$min_concentration <- 0.2
     dat$confirm_concentration <- 0.1
     expect_error(PCRprofilR:::pcr_assay(dat), "confirm_concentration")
+
+    dat$confirm_concentration <- 0.3
+    dat$target_role <- "unexpected"
+    expect_error(PCRprofilR:::pcr_assay(dat), "target_role")
 })
 
 test_that("pcr_assay coerces factor identifiers to character", {

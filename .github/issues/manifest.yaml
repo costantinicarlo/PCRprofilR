@@ -193,7 +193,7 @@ stages:
           - S04-03
       - id: S07-05
         file: .github/issues/stage-0.7/05-operational-rule-group-engine.md
-        status: open
+        status: closed
         depends_on:
           - S07-03
           - S07-04

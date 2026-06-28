@@ -23,3 +23,4 @@
 - Declared `R (>= 4.1.0)` to match native pipe usage in package source files and tightened source-build ignores for repository-only and generated vignette artifacts.
 - Added explicit QC control-role semantics for positive controls, negative controls, no-template controls, and blanks while retaining legacy sample-name inference as a fallback.
 - Added an explicit `allow_qc_issues` review path so missing or malformed well identifiers can be retained as machine-readable QC failures while strict canonical validation remains the default.
+- Made `rule_group` operational through optional assay `target_role` values (`required`, `optional`, `forbidden`) and added rule-status evidence fields to sample calls; compatible multi-target same-label profiles now resolve as positives instead of ambiguous reviews.

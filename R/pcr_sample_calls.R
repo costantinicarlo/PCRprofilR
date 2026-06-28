@@ -12,11 +12,17 @@ pcr_sample_calls <- function(peak_calls) {
         )
     }
 
+    if (!"target_role" %in% names(peak_calls)) {
+        peak_calls$target_role <- "optional"
+    }
+
     target_hits <- peak_calls |>
         dplyr::group_by(.data$run_id, .data$plate_id, .data$well_id, .data$sample_id, .data$target_id) |>
         dplyr::summarise(
             target_matched = any(.data$matched),
             target_biological_label = dplyr::first(.data$biological_label),
+            target_rule_group = dplyr::first(.data$rule_group),
+            target_role = dplyr::first(.data$target_role),
             target_best_zone = dplyr::case_when(
                 any(.data$within_window & .data$evidence_zone == "above_confirmatory") ~ "above_confirmatory",
                 any(.data$within_window & .data$evidence_zone == "analytical_to_confirmatory") ~ "analytical_to_confirmatory",
@@ -31,17 +37,29 @@ pcr_sample_calls <- function(peak_calls) {
         dplyr::summarise(
             matched_target_count = sum(.data$target_matched),
             matched_targets = paste(.data$target_id[.data$target_matched], collapse = ";"),
+            matched_rule_groups = paste(unique(.data$target_rule_group[.data$target_matched]), collapse = ";"),
             matched_label_count = dplyr::n_distinct(.data$target_biological_label[.data$target_matched]),
+            required_target_count = sum(.data$target_role == "required"),
+            required_target_matched_count = sum(.data$target_role == "required" & .data$target_matched),
+            missing_required_target_count = sum(.data$target_role == "required" & !.data$target_matched),
+            forbidden_target_count = sum(.data$target_role == "forbidden" & .data$target_matched),
             below_analytical_target_count = sum(.data$target_within_window_below),
             sample_threshold_zone = dplyr::case_when(
                 any(.data$target_best_zone == "above_confirmatory") ~ "above_confirmatory",
                 any(.data$target_best_zone == "analytical_to_confirmatory") ~ "analytical_to_confirmatory",
                 TRUE ~ "below_analytical"
             ),
+            rule_status = dplyr::case_when(
+                sum(.data$target_role == "forbidden" & .data$target_matched) > 0 ~ "forbidden_matched",
+                sum(.data$target_role == "required" & !.data$target_matched) > 0 & sum(.data$target_matched) > 0 ~ "missing_required_with_partial_match",
+                TRUE ~ "compatible"
+            ),
             call_state = dplyr::case_when(
+                sum(.data$target_role == "forbidden" & .data$target_matched) > 0 ~ "ambiguous_review",
+                sum(.data$target_role == "required" & !.data$target_matched) > 0 & sum(.data$target_matched) > 0 ~ "ambiguous_review",
                 sum(.data$target_matched) > 2 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) > 2 ~ "mixed_profile_candidate",
                 sum(.data$target_matched) == 2 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) == 2 ~ "hybrid_candidate",
-                sum(.data$target_matched) > 1 ~ "ambiguous_review",
+                sum(.data$target_matched) > 1 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) > 1 ~ "ambiguous_review",
                 any(.data$target_best_zone == "above_confirmatory") ~ "positive",
                 any(.data$target_best_zone == "analytical_to_confirmatory") ~ "weak_positive",
                 sum(.data$target_within_window_below) > 0 ~ "indeterminate_review",
@@ -59,6 +77,7 @@ pcr_sample_calls <- function(peak_calls) {
         )
 
     sample_summary$matched_targets[sample_summary$matched_target_count == 0] <- ""
+    sample_summary$matched_rule_groups[sample_summary$matched_target_count == 0] <- ""
 
     class(sample_summary) <- c("pcr_sample_calls", class(sample_summary))
     sample_summary

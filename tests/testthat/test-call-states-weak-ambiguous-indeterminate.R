@@ -33,7 +33,7 @@ test_that("pcr_sample_calls assigns weak_positive for analytical-to-confirmatory
     expect_identical(calls$call[[1]], "positive")
 })
 
-test_that("pcr_sample_calls assigns ambiguous_review for multiple matched targets", {
+test_that("pcr_sample_calls assigns positive for compatible multi-target same-label profiles", {
     peaks <- PCRprofilR:::pcr_peaks(data.frame(
         run_id = c("run-1", "run-1"),
         plate_id = c("plate-1", "plate-1"),
@@ -62,9 +62,10 @@ test_that("pcr_sample_calls assigns ambiguous_review for multiple matched target
 
     calls <- PCRprofilR:::pcr_sample_calls(PCRprofilR:::pcr_peak_calls(peaks, assay))
 
-    expect_identical(calls$call_state[[1]], "ambiguous_review")
-    expect_true(calls$review_required[[1]])
-    expect_identical(calls$threshold_status[[1]], "review")
+    expect_identical(calls$call_state[[1]], "positive")
+    expect_false(calls$review_required[[1]])
+    expect_identical(calls$threshold_status[[1]], "positive")
+    expect_identical(calls$rule_status[[1]], "compatible")
 })
 
 test_that("pcr_sample_calls assigns indeterminate_review for below-analytical in-window evidence", {
