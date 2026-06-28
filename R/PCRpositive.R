@@ -51,17 +51,62 @@ PCRpositive <- function(dat, target_size, tolerance, threshold) {
     return(NULL)
   }
 
-  out <- dat |>
-    dplyr::mutate(positive = dat$Conc >= threshold & inside.range(dat$Size, r))
+  valid_rows <-
+    !is.na(dat$Size) &
+    is.finite(dat$Size) &
+    dat$Size > 0 &
+    !is.na(dat$Conc) &
+    is.finite(dat$Conc) &
+    dat$Conc >= 0 &
+    !is.na(dat$SampleID) &
+    nzchar(as.character(dat$SampleID))
 
-  if (TRUE %in% out$positive) {
-    out |>
-      dplyr::filter(out$positive == TRUE) |>
-      dplyr::pull("SampleID") |>
-      unique() |>
-      as.character() |>
-      sort()
-  } else {
-    NULL
+  dat <- dat[valid_rows, , drop = FALSE]
+
+  if (nrow(dat) == 0L) {
+    return(NULL)
   }
+
+  legacy_well <- if ("WellID" %in% names(dat)) {
+    as.character(dat$WellID)
+  } else {
+    sprintf("W%05d", seq_len(nrow(dat)))
+  }
+
+  peaks_dat <- data.frame(
+    run_id = rep("legacy-run", nrow(dat)),
+    plate_id = rep("legacy-plate", nrow(dat)),
+    well_id = legacy_well,
+    sample_id = as.character(dat$SampleID),
+    peak_id = paste0("peak-", seq_len(nrow(dat))),
+    size_bp = as.numeric(dat$Size),
+    concentration = as.numeric(dat$Conc),
+    raw_file = rep("in-memory", nrow(dat)),
+    instrument = rep("legacy", nrow(dat)),
+    stringsAsFactors = FALSE
+  )
+
+  assay_dat <- data.frame(
+    assay_id = "legacy-assay",
+    target_id = "legacy-target",
+    expected_size_bp = target_size,
+    lower_size_bp = r[1L],
+    upper_size_bp = r[2L],
+    min_concentration = threshold,
+    biological_label = "positive",
+    rule_group = "legacy",
+    stringsAsFactors = FALSE
+  )
+
+  peaks <- pcr_peaks(peaks_dat)
+  assay <- pcr_assay(assay_dat)
+  peak_calls <- pcr_peak_calls(peaks, assay)
+  sample_calls <- pcr_sample_calls(peak_calls)
+
+  positives <- sample_calls$sample_id[sample_calls$call == "positive"] |>
+    as.character() |>
+    unique() |>
+    sort()
+
+  if (length(positives) == 0L) NULL else positives
 }

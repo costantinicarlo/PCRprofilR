@@ -12,7 +12,7 @@ pcr_peak_calls <- function(peaks, assay) {
     peak_tbl$.__join_key <- 1L
     assay_tbl$.__join_key <- 1L
 
-    out <- dplyr::left_join(peak_tbl, assay_tbl, by = ".__join_key")
+    out <- dplyr::left_join(peak_tbl, assay_tbl, by = ".__join_key", relationship = "many-to-many")
     out$.__join_key <- NULL
 
     out <- dplyr::mutate(

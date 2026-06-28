@@ -102,7 +102,7 @@ stages:
           - S04-01
       - id: S04-04
         file: .github/issues/stage-0.4/04-wrapper-routing-phase-1.md
-        status: open
+        status: closed
         depends_on:
           - S04-02
           - S04-03

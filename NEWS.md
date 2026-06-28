@@ -12,3 +12,4 @@
 - Added `pcr_peak_calls()` evidence-table generator linking canonical peaks to assay targets.
 - Added `pcr_sample_calls()` deterministic sample-level aggregation from peak evidence.
 - Added `pcr_qc()` machine-readable QC summary with initial run/sample/control flags.
+- Routed legacy `PCRpositive()` internals through canonical peaks, assay, evidence, and sample-call layers while preserving output behavior.
