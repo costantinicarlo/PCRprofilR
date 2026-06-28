@@ -21,6 +21,7 @@ pcr_sample_calls <- function(peak_calls) {
                 any(.data$within_window & .data$evidence_zone == "analytical_to_confirmatory") ~ "analytical_to_confirmatory",
                 TRUE ~ "below_analytical"
             ),
+            target_within_window_below = any(.data$within_window & .data$evidence_zone == "below_analytical"),
             .groups = "drop"
         )
 
@@ -29,19 +30,26 @@ pcr_sample_calls <- function(peak_calls) {
         dplyr::summarise(
             matched_target_count = sum(.data$target_matched),
             matched_targets = paste(.data$target_id[.data$target_matched], collapse = ";"),
+            below_analytical_target_count = sum(.data$target_within_window_below),
             sample_threshold_zone = dplyr::case_when(
                 any(.data$target_best_zone == "above_confirmatory") ~ "above_confirmatory",
                 any(.data$target_best_zone == "analytical_to_confirmatory") ~ "analytical_to_confirmatory",
                 TRUE ~ "below_analytical"
             ),
-            threshold_status = dplyr::case_when(
+            call_state = dplyr::case_when(
+                sum(.data$target_matched) > 1 ~ "ambiguous_review",
                 any(.data$target_best_zone == "above_confirmatory") ~ "positive",
-                any(.data$target_best_zone == "analytical_to_confirmatory") ~ "review",
+                any(.data$target_best_zone == "analytical_to_confirmatory") ~ "weak_positive",
+                sum(.data$target_within_window_below) > 0 ~ "indeterminate_review",
                 TRUE ~ "negative"
             ),
             call = dplyr::if_else(sum(.data$target_matched) > 0, "positive", "negative"),
             confidence = dplyr::if_else(sum(.data$target_matched) > 0, "baseline", "baseline"),
             .groups = "drop"
+        ) |>
+        dplyr::mutate(
+            threshold_status = dplyr::if_else(.data$call_state %in% c("positive", "negative"), .data$call_state, "review"),
+            review_required = .data$call_state %in% c("ambiguous_review", "weak_positive", "indeterminate_review")
         )
 
     sample_summary$matched_targets[sample_summary$matched_target_count == 0] <- ""

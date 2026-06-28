@@ -34,13 +34,24 @@ pcr_qc <- function(peaks, sample_calls = NULL) {
             sample_calls <- pcr_sample_calls(sample_calls)
         }
         call_tbl <- tibble::as_tibble(sample_calls) |>
-            dplyr::select("run_id", "plate_id", "well_id", "sample_id", "call")
+            dplyr::select("run_id", "plate_id", "well_id", "sample_id", "call", "call_state", "review_required")
 
         qc <- dplyr::left_join(qc, call_tbl, by = c("run_id", "plate_id", "well_id", "sample_id"))
-        qc <- dplyr::mutate(qc, no_matched_targets = .data$call == "negative")
+        qc <- dplyr::mutate(
+            qc,
+            no_matched_targets = .data$call == "negative",
+            weak_positive_state = .data$call_state == "weak_positive",
+            ambiguous_call_state = .data$call_state == "ambiguous_review",
+            indeterminate_call_state = .data$call_state == "indeterminate_review"
+        )
     } else {
         qc$call <- NA_character_
+        qc$call_state <- NA_character_
+        qc$review_required <- NA
         qc$no_matched_targets <- NA
+        qc$weak_positive_state <- NA
+        qc$ambiguous_call_state <- NA
+        qc$indeterminate_call_state <- NA
     }
 
     qc <- dplyr::mutate(

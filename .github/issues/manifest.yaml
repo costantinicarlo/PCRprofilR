@@ -123,7 +123,7 @@ stages:
           - S04-02
       - id: S05-02
         file: .github/issues/stage-0.5/02-weak-ambiguous-indeterminate-calls.md
-        status: open
+        status: closed
         depends_on:
           - S05-01
       - id: S05-03
