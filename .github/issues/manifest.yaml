@@ -157,6 +157,60 @@ stages:
         depends_on:
           - S06-02
 
+  - id: stage-0.7
+    tracking_file: .github/issues/stage-0.7/TRACKING.md
+    status: open
+    completion_gates:
+      - package_build_check_hygiene_resolved_or_documented
+      - validators_and_constructors_have_consistent_contracts
+      - control_roles_and_qc_expectations_explicit
+      - strict_validation_distinguished_from_qc_able_review_inputs
+      - rule_group_semantics_operational_and_tested
+      - plots_consume_core_evidence_calls_qc_for_new_workflows
+      - advanced_layers_deferred_behind_stable_core_contracts
+    issues:
+      - id: S07-01
+        file: .github/issues/stage-0.7/01-packaging-check-hygiene.md
+        status: open
+        depends_on:
+          - S06-03
+      - id: S07-02
+        file: .github/issues/stage-0.7/02-align-assay-validator-constructor.md
+        status: open
+        depends_on:
+          - S03-02
+      - id: S07-03
+        file: .github/issues/stage-0.7/03-explicit-control-roles-qc.md
+        status: open
+        depends_on:
+          - S07-02
+          - S04-03
+      - id: S07-04
+        file: .github/issues/stage-0.7/04-qc-able-malformed-input-contract.md
+        status: open
+        depends_on:
+          - S07-02
+          - S04-03
+      - id: S07-05
+        file: .github/issues/stage-0.7/05-operational-rule-group-engine.md
+        status: open
+        depends_on:
+          - S07-03
+          - S07-04
+          - S05-03
+      - id: S07-06
+        file: .github/issues/stage-0.7/06-plots-consume-classified-objects.md
+        status: open
+        depends_on:
+          - S07-05
+          - S06-03
+      - id: S07-07
+        file: .github/issues/stage-0.7/07-defer-advanced-layers-contract.md
+        status: open
+        depends_on:
+          - S07-01
+          - S07-06
+
 state_values:
   issue_status:
     - open
