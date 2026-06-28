@@ -53,13 +53,13 @@ PCRpositive <- function(dat, target_size, tolerance, threshold) {
 
   valid_rows <-
     !is.na(dat$Size) &
-    is.finite(dat$Size) &
-    dat$Size > 0 &
-    !is.na(dat$Conc) &
-    is.finite(dat$Conc) &
-    dat$Conc >= 0 &
-    !is.na(dat$SampleID) &
-    nzchar(as.character(dat$SampleID))
+      is.finite(dat$Size) &
+      dat$Size > 0 &
+      !is.na(dat$Conc) &
+      is.finite(dat$Conc) &
+      dat$Conc >= 0 &
+      !is.na(dat$SampleID) &
+      nzchar(as.character(dat$SampleID))
 
   dat <- dat[valid_rows, , drop = FALSE]
 
