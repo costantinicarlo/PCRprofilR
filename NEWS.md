@@ -19,3 +19,4 @@
 - Added `pcr_replicate_summary()` to deterministically aggregate replicate call-state/QC outcomes into concordant/discordant consensus summaries.
 - Added `pcr_batch_run()` file-based orchestration helper to run normalization, canonical calls, and QC and write reproducible batch artifacts.
 - Added `pcr_export_artifacts()` to export evidence/call/QC tables with provenance metadata and optional deterministic summary report.
+- Curated a public 1.0-facing API surface by exporting stable aliases (`as_pcr_*`, `detect_pcr_peaks()`, `classify_pcr_samples()`, `qc_pcr_run()`, `summarize_pcr_replicates()`, `run_pcr_batch()`, `report_pcr_calls()`) and schema validators.

@@ -127,7 +127,7 @@ Priority 1:
 
 Priority 2:
 
-- public API curation: decide which canonical functions become exported and stabilize naming/contracts for 1.0.0
+- completed on 2026-06-28: curated and exported 1.0-facing API aliases and validators to stabilize external naming/contracts while retaining legacy wrappers
 
 Priority 3:
 
