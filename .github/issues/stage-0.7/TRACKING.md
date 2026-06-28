@@ -5,7 +5,7 @@ Goal: harden the completed deterministic core so it is ready to support future D
 Checklist:
 - [x] 01-packaging-check-hygiene.md
 - [x] 02-align-assay-validator-constructor.md
-- [ ] 03-explicit-control-roles-qc.md
+- [x] 03-explicit-control-roles-qc.md
 - [ ] 04-qc-able-malformed-input-contract.md
 - [ ] 05-operational-rule-group-engine.md
 - [ ] 06-plots-consume-classified-objects.md
@@ -14,7 +14,7 @@ Checklist:
 Stage completion gates:
 - [x] Package build/check hygiene issues are resolved or intentionally documented
 - [x] Exported validators and constructors expose consistent contracts
-- [ ] Control roles and QC expectations are explicit and tested
+- [x] Control roles and QC expectations are explicit and tested
 - [ ] Malformed input handling distinguishes strict object validation from QC-able review data
 - [ ] `rule_group` has documented deterministic semantics
 - [ ] Plotting workflows consume core evidence/call/QC objects where new behavior is introduced

@@ -181,7 +181,7 @@ stages:
           - S03-02
       - id: S07-03
         file: .github/issues/stage-0.7/03-explicit-control-roles-qc.md
-        status: open
+        status: closed
         depends_on:
           - S07-02
           - S04-03

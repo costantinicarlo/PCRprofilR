@@ -81,21 +81,27 @@ Test files:
 ## Documentation
 - [ ] Roxygen/help text updated if needed
 - [ ] README/vignette updates included if user-facing behavior changed
-- [ ] NEWS entry added if appropriate
+- [x] NEWS entry added if appropriate
+
+Details:
+Added a NEWS entry for explicit control-role QC semantics. Roxygen changes were not required because the change is additive to the QC table contract and existing public functions remain callable.
 
 ## CI Status
-- [ ] Local checks pass
-- [ ] CI expected to pass
+- [x] Local checks pass
+- [x] CI expected to pass
+
+Details:
+Focused `test-pcr-qc.R`, `test-rule-engine-hybrid-mixed-contamination.R`, and `test-pcr-assay.R` passed. Full suite passed with 187 tests, 0 failures, and 0 warnings.
 
 ## Risk Assessment
 Medium: control semantics are scientifically important and can change QC interpretation. Add fields conservatively and document any changed status mapping.
 
 ## Definition of Done
-- [ ] Small, reviewable PR
-- [ ] Tests included
-- [ ] Return types explicit and stable
-- [ ] Compatibility impact documented
-- [ ] No unrelated refactors bundled
+- [x] Small, reviewable PR
+- [x] Tests included
+- [x] Return types explicit and stable
+- [x] Compatibility impact documented
+- [x] No unrelated refactors bundled
 
 ## Follow-up Items
 - Use explicit control roles in rule-group evaluation and future plate-map support.
