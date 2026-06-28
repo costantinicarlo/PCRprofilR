@@ -69,31 +69,38 @@ No scientific API behavior should change. If the minimum R version is updated, d
 - [x] Ambiguous/weak cases are preserved and flagged, not forced binary
 
 ## Tests
-- [ ] Existing behavior frozen where required
-- [ ] New behavior covered with focused testthat tests
-- [ ] Edge cases included (threshold boundaries, malformed input, multi-target/ambiguous cases)
+- [x] Existing behavior frozen where required
+- [x] New behavior covered with focused testthat tests
+- [x] Edge cases included (threshold boundaries, malformed input, multi-target/ambiguous cases)
 
 Test files:
 - Not expected unless a package-check scaffold test is updated.
+Full existing suite run as the behavioral guard.
 
 ## Documentation
-- [ ] Roxygen/help text updated if needed
+- [x] Roxygen/help text updated if needed
 - [ ] README/vignette updates included if user-facing behavior changed
-- [ ] NEWS entry added if appropriate
+- [x] NEWS entry added if appropriate
+
+Details:
+Updated `NEWS.md` for the minimum R version and source-build hygiene policy. Vignette content was not rewritten.
 
 ## CI Status
-- [ ] Local checks pass
-- [ ] CI expected to pass
+- [x] Local checks pass
+- [x] CI expected to pass
+
+Details:
+`env LC_ALL=C R CMD build --no-build-vignettes .` passed. `env LC_ALL=C _R_CHECK_FORCE_SUGGESTS_=false R CMD check --no-manual --no-build-vignettes PCRprofilR_0.2.0.tar.gz` completed with only the expected `--no-build-vignettes` warnings for the Rmd vignette and no `.github` note. `env LC_ALL=C Rscript -e 'pkgload::load_all(); testthat::test_dir("tests/testthat")'` passed with 167 tests.
 
 ## Risk Assessment
 Low: metadata and build-ignore changes can affect package distribution but should not affect runtime behavior.
 
 ## Definition of Done
-- [ ] Small, reviewable PR
-- [ ] Tests included
-- [ ] Return types explicit and stable
-- [ ] Compatibility impact documented
-- [ ] No unrelated refactors bundled
+- [x] Small, reviewable PR
+- [x] Tests included
+- [x] Return types explicit and stable
+- [x] Compatibility impact documented
+- [x] No unrelated refactors bundled
 
 ## Follow-up Items
 - Use this clean packaging baseline before validator, QC, rule-engine, and plot refactors.

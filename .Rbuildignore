@@ -3,3 +3,6 @@
 ^doc$
 ^Meta$
 ^LICENSE\.md$
+^\.github$
+^vignettes/.*\.R$
+^vignettes/.*\.html$

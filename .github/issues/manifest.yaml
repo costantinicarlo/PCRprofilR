@@ -171,7 +171,7 @@ stages:
     issues:
       - id: S07-01
         file: .github/issues/stage-0.7/01-packaging-check-hygiene.md
-        status: open
+        status: closed
         depends_on:
           - S06-03
       - id: S07-02
