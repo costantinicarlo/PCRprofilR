@@ -88,23 +88,89 @@ detect_pcr_peaks <- function(peaks, assay) {
     pcr_peak_calls(as_pcr_peaks(peaks), as_pcr_assay(assay))
 }
 
+#' Normalize a pairwise profile-rule specification into the PCRprofilR schema
+#'
+#' `as_pcr_profile_rules()` turns a data frame describing expected pairwise
+#' target relationships (for example putative hybrids) into a canonical
+#' `pcr_profile_rules` object. Profile rules are the only mechanism by which
+#' [evaluate_pcr_profiles()] and [classify_pcr_samples()] may produce a
+#' `hybrid_candidate` call; without an explicit, validated rule, dual-target
+#' samples resolve to a review state instead.
+#'
+#' @param dat A data frame or existing `pcr_profile_rules` object. Required
+#'   columns are `assay_id`, `profile_id`, `target_a`, `target_b`, and
+#'   `profile_type`. Optional columns are `calibration_status`,
+#'   `expected_log2_ratio`, `max_abs_log2_deviation`, `min_evidence_zone_a`,
+#'   `min_evidence_zone_b`, and `rule_version`.
+#'
+#' @return A tibble-like `pcr_profile_rules` object.
+#'
+#' @seealso [validate_pcr_profile_rules()], [evaluate_pcr_profiles()]
+#' @export
+as_pcr_profile_rules <- function(dat) {
+    if (inherits(dat, "pcr_profile_rules")) {
+        return(dat)
+    }
+
+    pcr_profile_rules(dat)
+}
+
+#' Evaluate pairwise PCR profile evidence for dual-target samples
+#'
+#' `evaluate_pcr_profiles()` computes deterministic, auditable profile-level
+#' evidence for samples with two matched biological targets, including
+#' deterministic representative-peak selection and continuous peak-balance
+#' metrics (`observed_log2_ratio`, `raw_balance_ratio`, `fold_imbalance`, and,
+#' when a validated pairwise rule applies, `abs_log2_deviation` and
+#' `balance_score`). This layer sits between peak-level evidence and
+#' sample-level calls so that `hybrid_candidate` requires explicit,
+#' calibrated, pair-specific evidence rather than the detection of two
+#' biological labels alone.
+#'
+#' @param peak_calls A `pcr_peak_calls` object produced by
+#'   [detect_pcr_peaks()].
+#' @param profile_rules Optional raw data frame or canonical
+#'   `pcr_profile_rules` object produced by [as_pcr_profile_rules()]. If
+#'   `NULL`, dual-target samples resolve to `rule_missing` profile evidence.
+#'
+#' @return A tibble-like `pcr_profile_evidence` object with one row per
+#'   dual-target sample.
+#'
+#' @seealso [as_pcr_profile_rules()], [classify_pcr_samples()]
+#' @export
+evaluate_pcr_profiles <- function(peak_calls, profile_rules = NULL) {
+    pcr_profile_evidence(peak_calls, profile_rules = profile_rules)
+}
+
 #' Classify PCR samples from peak-level evidence
 #'
 #' `classify_pcr_samples()` summarizes peak-level evidence into deterministic
 #' sample calls. It preserves reviewable states instead of forcing every sample
 #' into a binary positive/negative interpretation.
 #'
+#' Dual-target samples (two matched biological labels) are never
+#' automatically classified as `hybrid_candidate` from label counts alone. If
+#' `profile_evidence` is supplied, it is used directly. Otherwise, if
+#' `profile_rules` is supplied, matching pairwise profile evidence is computed
+#' internally via [evaluate_pcr_profiles()]. If neither is supplied,
+#' dual-target samples conservatively resolve to `dual_target_unresolved_review`.
+#'
 #' @param peak_calls A `pcr_peak_calls` object produced by
 #'   [detect_pcr_peaks()].
+#' @param profile_rules Optional raw data frame or canonical
+#'   `pcr_profile_rules` object. Ignored if `profile_evidence` is supplied.
+#' @param profile_evidence Optional `pcr_profile_evidence` object produced by
+#'   [evaluate_pcr_profiles()]. Takes precedence over `profile_rules`.
 #'
 #' @return A tibble-like `pcr_sample_calls` object with one row per sample,
 #'   including `call`, `call_state`, matched targets, threshold status,
 #'   rule status, and review flags.
 #'
-#' @seealso [detect_pcr_peaks()], [qc_pcr_run()], [plot_pcr_evidence()]
+#' @seealso [detect_pcr_peaks()], [evaluate_pcr_profiles()], [qc_pcr_run()],
+#'   [plot_pcr_evidence()]
 #' @export
-classify_pcr_samples <- function(peak_calls) {
-    pcr_sample_calls(peak_calls)
+classify_pcr_samples <- function(peak_calls, profile_rules = NULL, profile_evidence = NULL) {
+    pcr_sample_calls(peak_calls, profile_rules = profile_rules, profile_evidence = profile_evidence)
 }
 
 #' Create quality-control flags for a PCR run
@@ -165,19 +231,26 @@ summarize_pcr_replicates <- function(sample_calls, qc = NULL, replicate_keys = c
 #'   names to source column names.
 #' @param write_outputs Logical scalar controlling whether output files are
 #'   written in addition to returning computed objects.
+#' @param profile_rules_path Optional path to a delimited pairwise
+#'   profile-rule file, normalized with [as_pcr_profile_rules()]. If omitted,
+#'   dual-target samples resolve conservatively to review states rather than
+#'   `hybrid_candidate`; profile rules are never invented automatically.
 #'
 #' @return A list containing canonical workflow outputs, including peaks, assay,
-#'   peak calls, sample calls, QC, and exported file paths when requested.
+#'   profile rules, peak calls, profile evidence, sample calls, QC, and
+#'   exported file paths when requested.
 #'
-#' @seealso [as_pcr_peaks()], [detect_pcr_peaks()], [report_pcr_calls()]
+#' @seealso [as_pcr_peaks()], [detect_pcr_peaks()], [evaluate_pcr_profiles()],
+#'   [report_pcr_calls()]
 #' @export
-run_pcr_batch <- function(peaks_path, assay_path, output_dir, mapping = NULL, write_outputs = TRUE) {
+run_pcr_batch <- function(peaks_path, assay_path, output_dir, mapping = NULL, write_outputs = TRUE, profile_rules_path = NULL) {
     pcr_batch_run(
         peaks_path = peaks_path,
         assay_path = assay_path,
         output_dir = output_dir,
         mapping = mapping,
-        write_outputs = write_outputs
+        write_outputs = write_outputs,
+        profile_rules_path = profile_rules_path
     )
 }
 
@@ -197,13 +270,16 @@ run_pcr_batch <- function(peaks_path, assay_path, output_dir, mapping = NULL, wr
 #'   artifacts.
 #' @param write_summary Logical scalar controlling whether a plain-text summary
 #'   report is written.
+#' @param profile_evidence Optional `pcr_profile_evidence` object produced by
+#'   [evaluate_pcr_profiles()]. When supplied, it is exported alongside
+#'   `peak_calls`, `sample_calls`, and `qc` with the same provenance metadata.
 #'
 #' @return A `pcr_export_artifacts` object describing written artifact paths.
 #'
-#' @seealso [run_pcr_batch()], [detect_pcr_peaks()], [classify_pcr_samples()],
-#'   [qc_pcr_run()]
+#' @seealso [run_pcr_batch()], [detect_pcr_peaks()], [evaluate_pcr_profiles()],
+#'   [classify_pcr_samples()], [qc_pcr_run()]
 #' @export
-report_pcr_calls <- function(peak_calls, sample_calls, qc, output_dir, format = c("csv", "tsv"), metadata = list(), write_summary = TRUE) {
+report_pcr_calls <- function(peak_calls, sample_calls, qc, output_dir, format = c("csv", "tsv"), metadata = list(), write_summary = TRUE, profile_evidence = NULL) {
     pcr_export_artifacts(
         peak_calls = peak_calls,
         sample_calls = sample_calls,
@@ -211,6 +287,7 @@ report_pcr_calls <- function(peak_calls, sample_calls, qc, output_dir, format = 
         output_dir = output_dir,
         format = format,
         metadata = metadata,
-        write_summary = write_summary
+        write_summary = write_summary,
+        profile_evidence = profile_evidence
     )
 }

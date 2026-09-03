@@ -4,11 +4,17 @@
 \alias{classify_pcr_samples}
 \title{Classify PCR samples from peak-level evidence}
 \usage{
-classify_pcr_samples(peak_calls)
+classify_pcr_samples(peak_calls, profile_rules = NULL, profile_evidence = NULL)
 }
 \arguments{
 \item{peak_calls}{A \code{pcr_peak_calls} object produced by
 \code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}.}
+
+\item{profile_rules}{Optional raw data frame or canonical
+\code{pcr_profile_rules} object. Ignored if \code{profile_evidence} is supplied.}
+
+\item{profile_evidence}{Optional \code{pcr_profile_evidence} object produced by
+\code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}. Takes precedence over \code{profile_rules}.}
 }
 \value{
 A tibble-like \code{pcr_sample_calls} object with one row per sample,
@@ -20,6 +26,15 @@ rule status, and review flags.
 sample calls. It preserves reviewable states instead of forcing every sample
 into a binary positive/negative interpretation.
 }
+\details{
+Dual-target samples (two matched biological labels) are never
+automatically classified as \code{hybrid_candidate} from label counts alone. If
+\code{profile_evidence} is supplied, it is used directly. Otherwise, if
+\code{profile_rules} is supplied, matching pairwise profile evidence is computed
+internally via \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}. If neither is supplied,
+dual-target samples conservatively resolve to \code{dual_target_unresolved_review}.
+}
 \seealso{
-\code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}, \code{\link[=qc_pcr_run]{qc_pcr_run()}}, \code{\link[=plot_pcr_evidence]{plot_pcr_evidence()}}
+\code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}, \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}, \code{\link[=qc_pcr_run]{qc_pcr_run()}},
+\code{\link[=plot_pcr_evidence]{plot_pcr_evidence()}}
 }

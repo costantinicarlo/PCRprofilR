@@ -1,4 +1,4 @@
-test_that("pcr_sample_calls assigns hybrid_candidate for two matched biological labels", {
+test_that("pcr_sample_calls assigns dual_target_unresolved_review for two matched labels without a profile rule", {
     peaks <- PCRprofilR:::pcr_peaks(data.frame(
         run_id = c("run-1", "run-1"),
         plate_id = c("plate-1", "plate-1"),
@@ -25,10 +25,13 @@ test_that("pcr_sample_calls assigns hybrid_candidate for two matched biological 
         stringsAsFactors = FALSE
     ))
 
+    # Without an explicit, validated pairwise profile rule, two matched
+    # biological labels no longer automatically become hybrid_candidate.
     calls <- PCRprofilR:::pcr_sample_calls(PCRprofilR:::pcr_peak_calls(peaks, assay))
 
-    expect_identical(calls$call_state[[1]], "hybrid_candidate")
-    expect_true(calls$hybrid_candidate[[1]])
+    expect_identical(calls$call_state[[1]], "dual_target_unresolved_review")
+    expect_false(calls$hybrid_candidate[[1]])
+    expect_identical(calls$call[[1]], "positive")
     expect_true(calls$review_required[[1]])
 })
 

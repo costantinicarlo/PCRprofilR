@@ -1,4 +1,19 @@
-pcr_sample_calls <- function(peak_calls) {
+.pcr_dual_target_call_state <- function(profile_rule_status, balance_status, strength_status) {
+    dplyr::case_when(
+        profile_rule_status == "rule_missing" ~ "dual_target_unresolved_review",
+        profile_rule_status == "balance_not_evaluable" ~ "dual_target_balance_review",
+        profile_rule_status == "forbidden_profile" ~ "ambiguous_review",
+        profile_rule_status == "mixed_profile" ~ "mixed_profile_candidate",
+        profile_rule_status == "calibration_pending" ~ "dual_target_balance_review",
+        profile_rule_status == "calibration_validated" & strength_status == "fail" ~ "dual_target_weak_review",
+        profile_rule_status == "calibration_validated" & balance_status == "not_evaluable" ~ "dual_target_balance_review",
+        profile_rule_status == "calibration_validated" & balance_status == "fail" ~ "dual_target_imbalanced_review",
+        profile_rule_status == "calibration_validated" & balance_status == "pass" ~ "hybrid_candidate",
+        TRUE ~ "dual_target_unresolved_review"
+    )
+}
+
+pcr_sample_calls <- function(peak_calls, profile_rules = NULL, profile_evidence = NULL) {
     if (!inherits(peak_calls, "pcr_peak_calls")) {
         peak_calls <- pcr_peak_calls(peak_calls)
     }
@@ -14,6 +29,12 @@ pcr_sample_calls <- function(peak_calls) {
 
     if (!"target_role" %in% names(peak_calls)) {
         peak_calls$target_role <- "optional"
+    }
+
+    if (is.null(profile_evidence)) {
+        profile_evidence <- pcr_profile_evidence(peak_calls, profile_rules = profile_rules)
+    } else if (!inherits(profile_evidence, "pcr_profile_evidence")) {
+        stop("profile_evidence must be a pcr_profile_evidence object", call. = FALSE)
     }
 
     target_hits <- peak_calls |>
@@ -58,7 +79,7 @@ pcr_sample_calls <- function(peak_calls) {
                 sum(.data$target_role == "forbidden" & .data$target_matched) > 0 ~ "ambiguous_review",
                 sum(.data$target_role == "required" & !.data$target_matched) > 0 & sum(.data$target_matched) > 0 ~ "ambiguous_review",
                 sum(.data$target_matched) > 2 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) > 2 ~ "mixed_profile_candidate",
-                sum(.data$target_matched) == 2 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) == 2 ~ "hybrid_candidate",
+                sum(.data$target_matched) == 2 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) == 2 ~ "__dual_target_pending__",
                 sum(.data$target_matched) > 1 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) > 1 ~ "ambiguous_review",
                 any(.data$target_best_zone == "above_confirmatory") ~ "positive",
                 any(.data$target_best_zone == "analytical_to_confirmatory") ~ "weak_positive",
@@ -68,13 +89,32 @@ pcr_sample_calls <- function(peak_calls) {
             call = dplyr::if_else(sum(.data$target_matched) > 0, "positive", "negative"),
             confidence = dplyr::if_else(sum(.data$target_matched) > 0, "baseline", "baseline"),
             .groups = "drop"
-        ) |>
-        dplyr::mutate(
-            threshold_status = dplyr::if_else(.data$call_state %in% c("positive", "negative"), .data$call_state, "review"),
-            review_required = .data$call_state %in% c("ambiguous_review", "weak_positive", "indeterminate_review", "hybrid_candidate", "mixed_profile_candidate"),
-            hybrid_candidate = .data$call_state == "hybrid_candidate",
-            mixed_profile_candidate = .data$call_state == "mixed_profile_candidate"
         )
+
+    profile_tbl <- tibble::as_tibble(profile_evidence)
+    join_keys <- c("run_id", "plate_id", "well_id", "sample_id")
+    profile_fields <- intersect(c(join_keys, "profile_rule_status", "balance_status", "strength_status"), names(profile_tbl))
+    sample_summary <- dplyr::left_join(
+        sample_summary,
+        dplyr::select(profile_tbl, dplyr::all_of(profile_fields)),
+        by = join_keys
+    )
+
+    sample_summary <- dplyr::mutate(
+        sample_summary,
+        call_state = dplyr::if_else(
+            .data$call_state == "__dual_target_pending__",
+            .pcr_dual_target_call_state(.data$profile_rule_status, .data$balance_status, .data$strength_status),
+            .data$call_state
+        ),
+        threshold_status = dplyr::if_else(.data$call_state %in% c("positive", "negative"), .data$call_state, "review"),
+        review_required = .data$call_state %in% c(
+            "ambiguous_review", "weak_positive", "indeterminate_review", "hybrid_candidate", "mixed_profile_candidate",
+            "dual_target_unresolved_review", "dual_target_weak_review", "dual_target_imbalanced_review", "dual_target_balance_review"
+        ),
+        hybrid_candidate = .data$call_state == "hybrid_candidate",
+        mixed_profile_candidate = .data$call_state == "mixed_profile_candidate"
+    )
 
     sample_summary$matched_targets[sample_summary$matched_target_count == 0] <- ""
     sample_summary$matched_rule_groups[sample_summary$matched_target_count == 0] <- ""
