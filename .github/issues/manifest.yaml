@@ -211,6 +211,26 @@ stages:
           - S07-01
           - S07-06
 
+  - id: stage-0.8
+    tracking_file: .github/issues/stage-0.8/TRACKING.md
+    status: open
+    completion_gates:
+      - pcr_profile_rules_constructor_validator_operational
+      - pcr_profile_evidence_operational_via_evaluate_pcr_profiles
+      - representative_peak_selection_deterministic_and_outcome_independent
+      - overlapping_window_double_count_guarded
+      - dual_target_review_states_implemented_and_tested
+      - call_vs_call_state_distinction_preserved
+      - qc_unchanged_consumes_call_state_only
+      - replicate_layer_recognizes_new_review_states
+      - backward_compatible_wrappers_unaffected
+    issues:
+      - id: S08-01
+        file: .github/issues/stage-0.8/01-pairwise-profile-evidence-peak-balance.md
+        status: open
+        depends_on:
+          - S07-07
+
 state_values:
   issue_status:
     - open

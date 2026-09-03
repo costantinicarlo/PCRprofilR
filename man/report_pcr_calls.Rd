@@ -11,7 +11,8 @@ report_pcr_calls(
   output_dir,
   format = c("csv", "tsv"),
   metadata = list(),
-  write_summary = TRUE
+  write_summary = TRUE,
+  profile_evidence = NULL
 )
 }
 \arguments{
@@ -31,6 +32,10 @@ artifacts.}
 
 \item{write_summary}{Logical scalar controlling whether a plain-text summary
 report is written.}
+
+\item{profile_evidence}{Optional \code{pcr_profile_evidence} object produced by
+\code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}. When supplied, it is exported alongside
+\code{peak_calls}, \code{sample_calls}, and \code{qc} with the same provenance metadata.}
 }
 \value{
 A \code{pcr_export_artifacts} object describing written artifact paths.
@@ -41,6 +46,6 @@ records provenance metadata. Use it when results should be stored as
 auditable artifacts rather than copied manually from the R console.
 }
 \seealso{
-\code{\link[=run_pcr_batch]{run_pcr_batch()}}, \code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}, \code{\link[=classify_pcr_samples]{classify_pcr_samples()}},
-\code{\link[=qc_pcr_run]{qc_pcr_run()}}
+\code{\link[=run_pcr_batch]{run_pcr_batch()}}, \code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}, \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}},
+\code{\link[=classify_pcr_samples]{classify_pcr_samples()}}, \code{\link[=qc_pcr_run]{qc_pcr_run()}}
 }

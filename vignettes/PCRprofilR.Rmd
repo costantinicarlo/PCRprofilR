@@ -204,8 +204,15 @@ The main call states are:
 - `negative`: no target evidence;
 - `weak_positive`: target evidence above the analytical threshold but below the confirmatory threshold;
 - `indeterminate_review`: a trace is inside the expected size window but below the analytical threshold;
-- `ambiguous_review`: the pattern conflicts with the assay rules;
-- `hybrid_candidate` or `mixed_profile_candidate`: several biological labels are detected and the profile should be reviewed.
+- `ambiguous_review`: the pattern conflicts with the assay rules, or a target pair is explicitly defined as biologically incompatible;
+- `mixed_profile_candidate`: more than two biological labels are detected, or a target pair is explicitly defined as a mixed (non-hybrid) profile;
+- `dual_target_unresolved_review`: two biological labels are detected but no pairwise profile rule has been supplied for that target pair;
+- `dual_target_balance_review`: a recognised hybrid target pair exists but its balance calibration is still `pending`, or its peak balance cannot be evaluated;
+- `dual_target_weak_review`: a validated hybrid rule applies but one or both targets do not meet the rule's minimum evidence-zone requirement;
+- `dual_target_imbalanced_review`: a validated hybrid rule applies, both targets are sufficiently strong, but the observed peak-concentration balance fails the rule's tolerance;
+- `hybrid_candidate`: a validated, pair-specific profile rule applies, both targets are sufficiently strong, and the observed peak balance is compatible with the calibrated expectation.
+
+Detecting two matched biological targets is deliberately **not** sufficient on its own for `hybrid_candidate`. Real profiles often contain a dominant target and a much weaker secondary trace with orders-of-magnitude lower concentration; treating that pattern as an automatic hybrid call produces an implausibly high false-positive rate. `hybrid_candidate` requires an explicit `pcr_profile_rules` entry (see [`as_pcr_profile_rules()`]) with `calibration_status = "validated"`, an `expected_log2_ratio`, and a `max_abs_log2_deviation` derived from empirical calibration against independently confirmed samples — not from the automatically-called hybrid set itself, which is exactly the population under scrutiny. Until that calibration exists for a given target pair, dual-target samples resolve to a review state rather than a false hybrid call.
 
 The important habit is to treat review states as part of the result, not as errors to be discarded.
 

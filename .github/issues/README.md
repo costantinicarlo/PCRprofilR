@@ -25,6 +25,7 @@ Execution order:
 4. stage-0.5/TRACKING.md
 5. stage-0.6/TRACKING.md
 6. stage-0.7/TRACKING.md
+7. stage-0.8/TRACKING.md
 
 Core policy references:
 - .github/copilot-instructions.md

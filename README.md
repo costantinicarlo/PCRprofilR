@@ -41,14 +41,18 @@ Use these functions for new deterministic workflows:
 
 - `as_pcr_peaks()`: normalize raw peak tables into the canonical peak schema.
 - `as_pcr_assay()`: normalize assay target specifications.
-- `validate_pcr_peaks()` and `validate_pcr_assay()`: check canonical object contracts.
+- `as_pcr_profile_rules()`: normalize pairwise target-relationship rules (hybrid, mixed, forbidden) used to gate `hybrid_candidate` calls.
+- `validate_pcr_peaks()`, `validate_pcr_assay()`, and `validate_pcr_profile_rules()`: check canonical object contracts.
 - `detect_pcr_peaks()`: compare observed peaks with assay targets and create peak evidence.
-- `classify_pcr_samples()`: summarize peak evidence into sample-level calls.
+- `evaluate_pcr_profiles()`: compute deterministic representative-peak selection and peak-balance evidence for dual-target samples.
+- `classify_pcr_samples()`: summarize peak evidence (and, where supplied, profile evidence) into sample-level calls.
 - `qc_pcr_run()`: create machine-readable QC flags.
 - `plot_pcr_evidence()`: plot already-classified evidence without recomputing calls.
 - `summarize_pcr_replicates()`: summarize repeated tests.
 - `run_pcr_batch()`: run the deterministic workflow from input files.
 - `report_pcr_calls()`: export evidence, calls, QC, summary files, and provenance.
+
+> **Note:** detecting two matched biological targets is no longer sufficient for a `hybrid_candidate` call. An explicit, validated `pcr_profile_rules` entry with a passing pair-specific balance check is required; otherwise the sample resolves to a `dual_target_*_review` state. See `NEWS.md` for details.
 
 Legacy compatibility wrappers are still exported:
 
