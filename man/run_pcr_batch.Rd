@@ -9,7 +9,8 @@ run_pcr_batch(
   assay_path,
   output_dir,
   mapping = NULL,
-  write_outputs = TRUE
+  write_outputs = TRUE,
+  profile_rules_path = NULL
 )
 }
 \arguments{
@@ -25,10 +26,16 @@ names to source column names.}
 
 \item{write_outputs}{Logical scalar controlling whether output files are
 written in addition to returning computed objects.}
+
+\item{profile_rules_path}{Optional path to a delimited pairwise
+profile-rule file, normalized with \code{\link[=as_pcr_profile_rules]{as_pcr_profile_rules()}}. If omitted,
+dual-target samples resolve conservatively to review states rather than
+\code{hybrid_candidate}; profile rules are never invented automatically.}
 }
 \value{
 A list containing canonical workflow outputs, including peaks, assay,
-peak calls, sample calls, QC, and exported file paths when requested.
+profile rules, peak calls, profile evidence, sample calls, QC, and
+exported file paths when requested.
 }
 \description{
 \code{run_pcr_batch()} reads peak and assay files, normalizes them, computes peak
@@ -37,5 +44,6 @@ output artifacts. It is the file-based orchestration helper for scripted or
 container workflows.
 }
 \seealso{
-\code{\link[=as_pcr_peaks]{as_pcr_peaks()}}, \code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}, \code{\link[=report_pcr_calls]{report_pcr_calls()}}
+\code{\link[=as_pcr_peaks]{as_pcr_peaks()}}, \code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}, \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}},
+\code{\link[=report_pcr_calls]{report_pcr_calls()}}
 }

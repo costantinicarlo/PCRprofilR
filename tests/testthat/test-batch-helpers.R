@@ -36,9 +36,11 @@ test_that("pcr_batch_run orchestrates canonical pipeline and writes output files
 
     expect_s3_class(out, "pcr_batch_run")
     expect_true(inherits(out$peak_calls, "pcr_peak_calls"))
+    expect_true(inherits(out$profile_evidence, "pcr_profile_evidence"))
     expect_true(inherits(out$sample_calls, "pcr_sample_calls"))
     expect_true(inherits(out$qc, "pcr_qc"))
-    expect_length(out$written_files, 3)
+    expect_null(out$profile_rules)
+    expect_length(out$written_files, 4)
     expect_true(all(file.exists(out$written_files)))
 })
 

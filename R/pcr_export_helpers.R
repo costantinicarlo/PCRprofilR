@@ -31,7 +31,7 @@
     }
 }
 
-pcr_export_artifacts <- function(peak_calls, sample_calls, qc, output_dir, format = c("csv", "tsv"), metadata = list(), write_summary = TRUE) {
+pcr_export_artifacts <- function(peak_calls, sample_calls, qc, output_dir, format = c("csv", "tsv"), metadata = list(), write_summary = TRUE, profile_evidence = NULL) {
     format <- match.arg(format)
 
     if (!is.character(output_dir) || length(output_dir) != 1L || !nzchar(output_dir)) {
@@ -55,6 +55,12 @@ pcr_export_artifacts <- function(peak_calls, sample_calls, qc, output_dir, forma
     .write_pcr_table(peak_calls_out, files[["peak_calls"]], format = format)
     .write_pcr_table(sample_calls_out, files[["sample_calls"]], format = format)
     .write_pcr_table(qc_out, files[["qc"]], format = format)
+
+    if (!is.null(profile_evidence)) {
+        profile_evidence_out <- .with_provenance(profile_evidence, metadata = metadata)
+        files <- c(files, profile_evidence = file.path(output_dir, paste0("profile_evidence.", ext)))
+        .write_pcr_table(profile_evidence_out, files[["profile_evidence"]], format = format)
+    }
 
     summary_file <- NA_character_
     if (isTRUE(write_summary)) {

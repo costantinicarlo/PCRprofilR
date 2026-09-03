@@ -11,7 +11,7 @@
     utils::read.table(path, header = TRUE, sep = sep, stringsAsFactors = FALSE, check.names = FALSE)
 }
 
-pcr_batch_run <- function(peaks_path, assay_path, output_dir, mapping = NULL, write_outputs = TRUE) {
+pcr_batch_run <- function(peaks_path, assay_path, output_dir, mapping = NULL, write_outputs = TRUE, profile_rules_path = NULL) {
     peaks_raw <- .read_pcr_table(peaks_path)
     assay_raw <- .read_pcr_table(assay_path)
 
@@ -19,14 +19,22 @@ pcr_batch_run <- function(peaks_path, assay_path, output_dir, mapping = NULL, wr
     peaks <- pcr_peaks(peaks_norm)
     assay <- pcr_assay(assay_raw)
 
+    profile_rules <- NULL
+    if (!is.null(profile_rules_path)) {
+        profile_rules <- pcr_profile_rules(.read_pcr_table(profile_rules_path))
+    }
+
     peak_calls <- pcr_peak_calls(peaks, assay)
-    sample_calls <- pcr_sample_calls(peak_calls)
+    profile_evidence <- pcr_profile_evidence(peak_calls, profile_rules = profile_rules)
+    sample_calls <- pcr_sample_calls(peak_calls, profile_evidence = profile_evidence)
     qc <- pcr_qc(peaks, sample_calls)
 
     outputs <- list(
         peaks = peaks,
         assay = assay,
+        profile_rules = profile_rules,
         peak_calls = peak_calls,
+        profile_evidence = profile_evidence,
         sample_calls = sample_calls,
         qc = qc,
         written_files = character(0)
@@ -40,11 +48,13 @@ pcr_batch_run <- function(peaks_path, assay_path, output_dir, mapping = NULL, wr
         dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
         files <- c(
             peak_calls = file.path(output_dir, "peak_calls.csv"),
+            profile_evidence = file.path(output_dir, "profile_evidence.csv"),
             sample_calls = file.path(output_dir, "sample_calls.csv"),
             qc = file.path(output_dir, "qc.csv")
         )
 
         utils::write.csv(tibble::as_tibble(peak_calls), files[["peak_calls"]], row.names = FALSE)
+        utils::write.csv(tibble::as_tibble(profile_evidence), files[["profile_evidence"]], row.names = FALSE)
         utils::write.csv(tibble::as_tibble(sample_calls), files[["sample_calls"]], row.names = FALSE)
         utils::write.csv(tibble::as_tibble(qc), files[["qc"]], row.names = FALSE)
 
