@@ -77,6 +77,27 @@ validate_pcr_profile_rules <- function(x) {
         )
     }
 
+    # Optional columns default the same way here as in the pcr_profile_rules() constructor,
+    # so validate_pcr_profile_rules() accepts the documented minimal schema directly.
+    if (!"calibration_status" %in% names(x)) {
+        x$calibration_status <- "pending"
+    }
+    if (!"expected_log2_ratio" %in% names(x)) {
+        x$expected_log2_ratio <- NA_real_
+    }
+    if (!"max_abs_log2_deviation" %in% names(x)) {
+        x$max_abs_log2_deviation <- NA_real_
+    }
+    if (!"min_evidence_zone_a" %in% names(x)) {
+        x$min_evidence_zone_a <- "above_confirmatory"
+    }
+    if (!"min_evidence_zone_b" %in% names(x)) {
+        x$min_evidence_zone_b <- "above_confirmatory"
+    }
+    if (!"rule_version" %in% names(x)) {
+        x$rule_version <- "1"
+    }
+
     if (!is.character(x$calibration_status) || any(is.na(x$calibration_status)) || any(!x$calibration_status %in% pcr_profile_rules_calibration_statuses)) {
         stop(
             sprintf(

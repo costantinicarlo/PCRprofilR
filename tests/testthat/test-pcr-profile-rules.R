@@ -110,6 +110,19 @@ test_that("pcr_profile_rules rejects invalid evidence zone values", {
     )
 })
 
+test_that("validate_pcr_profile_rules accepts the documented minimal schema directly", {
+    minimal <- data.frame(
+        assay_id = "assay-1",
+        profile_id = "p1",
+        target_a = "gambiae",
+        target_b = "arabiensis",
+        profile_type = "mixed",
+        stringsAsFactors = FALSE
+    )
+
+    expect_silent(PCRprofilR:::validate_pcr_profile_rules(minimal))
+})
+
 test_that("pcr_profile_rules rejects unknown profile_type and calibration_status", {
     expect_error(
         PCRprofilR:::pcr_profile_rules(data.frame(
