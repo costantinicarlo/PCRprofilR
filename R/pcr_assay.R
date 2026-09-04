@@ -21,6 +21,14 @@ pcr_assay_required_cols <- c(
 #' `min_concentration` for validation. If `target_role` is present, values must
 #' be `required`, `optional`, or `forbidden`.
 #'
+#' A canonical `pcr_assay` object represents exactly one assay: it must
+#' contain exactly one unique `assay_id`, and `(assay_id, target_id)` pairs
+#' must be unique. [detect_pcr_peaks()] has no way to know which of several
+#' candidate assays produced an observed peak, so a multi-assay table would
+#' let targets from different assays combine or collapse silently.
+#' Multi-assay support requires assay identity in the observed-peak schema and
+#' is out of scope for this contract.
+#'
 #' @param x Candidate canonical assay table.
 #'
 #' @return The validated input, invisibly.
@@ -92,6 +100,26 @@ validate_pcr_assay <- function(x) {
                 call. = FALSE
             )
         }
+    }
+
+    if (dplyr::n_distinct(x$assay_id) != 1L) {
+        stop(
+            sprintf(
+                "pcr_assay must represent exactly one assay_id; found %d distinct values: %s",
+                dplyr::n_distinct(x$assay_id), paste(sort(unique(x$assay_id)), collapse = ", ")
+            ),
+            call. = FALSE
+        )
+    }
+
+    if (anyDuplicated(x$target_id) > 0) {
+        stop(
+            sprintf(
+                "pcr_assay must not define duplicate target_id values within an assay: %s",
+                paste(unique(x$target_id[duplicated(x$target_id)]), collapse = ", ")
+            ),
+            call. = FALSE
+        )
     }
 
     invisible(x)

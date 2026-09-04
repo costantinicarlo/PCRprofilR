@@ -108,11 +108,7 @@ pcr_qc <- function(peaks, sample_calls = NULL, allow_qc_issues = FALSE) {
                 .data$no_template_control_failed | .data$blank_control_failed,
             contamination_candidate = .data$negative_control_failed | .data$no_template_control_failed |
                 .data$blank_control_failed |
-                (.data$duplicate_sample_id_in_run & .data$call_state %in% c(
-                    "hybrid_candidate", "mixed_profile_candidate", "ambiguous_review",
-                    "dual_target_unresolved_review", "dual_target_weak_review",
-                    "dual_target_imbalanced_review", "dual_target_balance_review"
-                ))
+                (.data$duplicate_sample_id_in_run & .data$call_state %in% .pcr_contamination_relevant_call_states)
         )
     } else {
         qc$call <- NA_character_

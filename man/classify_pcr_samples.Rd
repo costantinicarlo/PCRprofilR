@@ -11,10 +11,12 @@ classify_pcr_samples(peak_calls, profile_rules = NULL, profile_evidence = NULL)
 \code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}.}
 
 \item{profile_rules}{Optional raw data frame or canonical
-\code{pcr_profile_rules} object. Ignored if \code{profile_evidence} is supplied.}
+\code{pcr_profile_rules} object. Must not be supplied together with
+\code{profile_evidence}.}
 
 \item{profile_evidence}{Optional \code{pcr_profile_evidence} object produced by
-\code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}. Takes precedence over \code{profile_rules}.}
+\code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}. Must not be supplied together with
+\code{profile_rules}.}
 }
 \value{
 A tibble-like \code{pcr_sample_calls} object with one row per sample,
@@ -28,13 +30,16 @@ into a binary positive/negative interpretation.
 }
 \details{
 Dual-target samples (two matched biological labels) are never
-automatically classified as \code{hybrid_candidate} from label counts alone. If
-\code{profile_evidence} is supplied, it is used directly. Otherwise, if
-\code{profile_rules} is supplied, matching pairwise profile evidence is computed
-internally via \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}. If neither is supplied,
-dual-target samples conservatively resolve to \code{dual_target_unresolved_review}.
+automatically classified as \code{hybrid_candidate} from label counts alone.
+Supply exactly one of \code{profile_rules} (rules to compute evidence from) or
+\code{profile_evidence} (precomputed, already-validated evidence); supplying
+both is an error. If neither is supplied, dual-target samples
+conservatively resolve to \code{dual_target_unresolved_review}. Any supplied
+\code{profile_evidence} is always re-validated against \code{peak_calls} with
+\code{\link[=validate_pcr_profile_evidence]{validate_pcr_profile_evidence()}}, even if it already inherits the correct
+class.
 }
 \seealso{
-\code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}, \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}, \code{\link[=qc_pcr_run]{qc_pcr_run()}},
-\code{\link[=plot_pcr_evidence]{plot_pcr_evidence()}}
+\code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}, \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}},
+\code{\link[=validate_pcr_profile_evidence]{validate_pcr_profile_evidence()}}, \code{\link[=qc_pcr_run]{qc_pcr_run()}}, \code{\link[=plot_pcr_evidence]{plot_pcr_evidence()}}
 }

@@ -149,25 +149,30 @@ evaluate_pcr_profiles <- function(peak_calls, profile_rules = NULL) {
 #' into a binary positive/negative interpretation.
 #'
 #' Dual-target samples (two matched biological labels) are never
-#' automatically classified as `hybrid_candidate` from label counts alone. If
-#' `profile_evidence` is supplied, it is used directly. Otherwise, if
-#' `profile_rules` is supplied, matching pairwise profile evidence is computed
-#' internally via [evaluate_pcr_profiles()]. If neither is supplied,
-#' dual-target samples conservatively resolve to `dual_target_unresolved_review`.
+#' automatically classified as `hybrid_candidate` from label counts alone.
+#' Supply exactly one of `profile_rules` (rules to compute evidence from) or
+#' `profile_evidence` (precomputed, already-validated evidence); supplying
+#' both is an error. If neither is supplied, dual-target samples
+#' conservatively resolve to `dual_target_unresolved_review`. Any supplied
+#' `profile_evidence` is always re-validated against `peak_calls` with
+#' [validate_pcr_profile_evidence()], even if it already inherits the correct
+#' class.
 #'
 #' @param peak_calls A `pcr_peak_calls` object produced by
 #'   [detect_pcr_peaks()].
 #' @param profile_rules Optional raw data frame or canonical
-#'   `pcr_profile_rules` object. Ignored if `profile_evidence` is supplied.
+#'   `pcr_profile_rules` object. Must not be supplied together with
+#'   `profile_evidence`.
 #' @param profile_evidence Optional `pcr_profile_evidence` object produced by
-#'   [evaluate_pcr_profiles()]. Takes precedence over `profile_rules`.
+#'   [evaluate_pcr_profiles()]. Must not be supplied together with
+#'   `profile_rules`.
 #'
 #' @return A tibble-like `pcr_sample_calls` object with one row per sample,
 #'   including `call`, `call_state`, matched targets, threshold status,
 #'   rule status, and review flags.
 #'
-#' @seealso [detect_pcr_peaks()], [evaluate_pcr_profiles()], [qc_pcr_run()],
-#'   [plot_pcr_evidence()]
+#' @seealso [detect_pcr_peaks()], [evaluate_pcr_profiles()],
+#'   [validate_pcr_profile_evidence()], [qc_pcr_run()], [plot_pcr_evidence()]
 #' @export
 classify_pcr_samples <- function(peak_calls, profile_rules = NULL, profile_evidence = NULL) {
     pcr_sample_calls(peak_calls, profile_rules = profile_rules, profile_evidence = profile_evidence)
@@ -273,13 +278,20 @@ run_pcr_batch <- function(peaks_path, assay_path, output_dir, mapping = NULL, wr
 #' @param profile_evidence Optional `pcr_profile_evidence` object produced by
 #'   [evaluate_pcr_profiles()]. When supplied, it is exported alongside
 #'   `peak_calls`, `sample_calls`, and `qc` with the same provenance metadata.
+#'   A zero-row canonical profile-evidence artifact is written when omitted.
+#' @param profile_rules Optional canonical `pcr_profile_rules` object. When
+#'   supplied and non-empty, it is exported as `profile_rules.csv`/`.tsv` and
+#'   `provenance_profile_rules_supplied` is recorded `TRUE`; otherwise a
+#'   zero-row canonical rules artifact is written and the field is `FALSE`, so
+#'   absence of calibrated rules is explicit rather than inferable only from a
+#'   missing file.
 #'
 #' @return A `pcr_export_artifacts` object describing written artifact paths.
 #'
 #' @seealso [run_pcr_batch()], [detect_pcr_peaks()], [evaluate_pcr_profiles()],
 #'   [classify_pcr_samples()], [qc_pcr_run()]
 #' @export
-report_pcr_calls <- function(peak_calls, sample_calls, qc, output_dir, format = c("csv", "tsv"), metadata = list(), write_summary = TRUE, profile_evidence = NULL) {
+report_pcr_calls <- function(peak_calls, sample_calls, qc, output_dir, format = c("csv", "tsv"), metadata = list(), write_summary = TRUE, profile_evidence = NULL, profile_rules = NULL) {
     pcr_export_artifacts(
         peak_calls = peak_calls,
         sample_calls = sample_calls,
@@ -288,6 +300,7 @@ report_pcr_calls <- function(peak_calls, sample_calls, qc, output_dir, format = 
         format = format,
         metadata = metadata,
         write_summary = write_summary,
-        profile_evidence = profile_evidence
+        profile_evidence = profile_evidence,
+        profile_rules = profile_rules
     )
 }

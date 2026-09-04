@@ -23,18 +23,23 @@ forbidden target-pair combination). Profile rules are consumed by
 }
 \details{
 Required columns are \code{assay_id}, \code{profile_id}, \code{target_a}, \code{target_b}, and
-\code{profile_type}. Optional columns are \code{calibration_status} (default
-\code{"pending"}), \code{expected_log2_ratio}, \code{max_abs_log2_deviation},
-\code{min_evidence_zone_a}, \code{min_evidence_zone_b} (default
-\code{"above_confirmatory"}), and \code{rule_version} (default \code{"1"}).
+\code{profile_type}. If \code{calibration_status} is absent, it defaults per row to
+\code{"pending"} for \code{hybrid} rules and \code{"not_applicable"} for \code{mixed}/
+\code{forbidden} rules. \code{min_evidence_zone_a}/\code{min_evidence_zone_b} default to
+\code{"above_confirmatory"} and \code{rule_version} defaults to \code{"1"} \strong{only} when
+those columns are entirely absent; a validated hybrid rule requires all of
+\code{expected_log2_ratio}, \code{max_abs_log2_deviation}, \code{min_evidence_zone_a},
+\code{min_evidence_zone_b}, and \code{rule_version} to have been explicitly supplied,
+so scientifically consequential thresholds are never assigned silently.
 
 \code{profile_type} must be one of \code{"hybrid"}, \code{"mixed"}, or \code{"forbidden"}.
-\code{calibration_status} must be one of \code{"pending"}, \code{"validated"}, or
-\code{"not_applicable"}. A row with \code{profile_type == "hybrid"} and
-\code{calibration_status == "validated"} must supply a finite
-\code{expected_log2_ratio} and a finite, non-negative \code{max_abs_log2_deviation}.
-\code{target_a} and \code{target_b} must differ, and the same unordered target pair
-must not appear more than once within the same \code{assay_id}.
+Allowed \code{calibration_status} values depend on \code{profile_type}: \code{hybrid}
+allows \code{"pending"}/\code{"validated"}; \code{mixed} and \code{forbidden} allow only
+\code{"not_applicable"}. \code{target_a} and \code{target_b} must differ, and the same
+unordered target pair must not appear more than once within the same
+\code{assay_id}. Identifier columns (\code{assay_id}, \code{profile_id}, \code{target_a},
+\code{target_b}) must not contain leading or trailing whitespace; enum columns
+are trimmed and lower-cased before validation.
 }
 \seealso{
 \code{\link[=as_pcr_profile_rules]{as_pcr_profile_rules()}}, \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}

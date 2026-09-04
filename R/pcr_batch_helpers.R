@@ -45,20 +45,20 @@ pcr_batch_run <- function(peaks_path, assay_path, output_dir, mapping = NULL, wr
             stop("output_dir must be a non-empty character scalar", call. = FALSE)
         }
 
-        dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-        files <- c(
-            peak_calls = file.path(output_dir, "peak_calls.csv"),
-            profile_evidence = file.path(output_dir, "profile_evidence.csv"),
-            sample_calls = file.path(output_dir, "sample_calls.csv"),
-            qc = file.path(output_dir, "qc.csv")
+        # Route batch exports through the same canonical provenance/writing implementation
+        # used by report_pcr_calls(), instead of a second, lower-provenance write.csv() path.
+        artifacts <- pcr_export_artifacts(
+            peak_calls = peak_calls,
+            sample_calls = sample_calls,
+            qc = qc,
+            output_dir = output_dir,
+            format = "csv",
+            profile_evidence = profile_evidence,
+            profile_rules = profile_rules,
+            write_summary = TRUE
         )
 
-        utils::write.csv(tibble::as_tibble(peak_calls), files[["peak_calls"]], row.names = FALSE)
-        utils::write.csv(tibble::as_tibble(profile_evidence), files[["profile_evidence"]], row.names = FALSE)
-        utils::write.csv(tibble::as_tibble(sample_calls), files[["sample_calls"]], row.names = FALSE)
-        utils::write.csv(tibble::as_tibble(qc), files[["qc"]], row.names = FALSE)
-
-        outputs$written_files <- unname(files)
+        outputs$written_files <- artifacts$files
     }
 
     class(outputs) <- c("pcr_batch_run", class(outputs))

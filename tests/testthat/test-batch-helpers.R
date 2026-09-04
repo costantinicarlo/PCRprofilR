@@ -40,7 +40,7 @@ test_that("pcr_batch_run orchestrates canonical pipeline and writes output files
     expect_true(inherits(out$sample_calls, "pcr_sample_calls"))
     expect_true(inherits(out$qc, "pcr_qc"))
     expect_null(out$profile_rules)
-    expect_length(out$written_files, 4)
+    expect_length(out$written_files, 5)
     expect_true(all(file.exists(out$written_files)))
 })
 

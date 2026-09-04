@@ -12,7 +12,8 @@ report_pcr_calls(
   format = c("csv", "tsv"),
   metadata = list(),
   write_summary = TRUE,
-  profile_evidence = NULL
+  profile_evidence = NULL,
+  profile_rules = NULL
 )
 }
 \arguments{
@@ -35,7 +36,15 @@ report is written.}
 
 \item{profile_evidence}{Optional \code{pcr_profile_evidence} object produced by
 \code{\link[=evaluate_pcr_profiles]{evaluate_pcr_profiles()}}. When supplied, it is exported alongside
-\code{peak_calls}, \code{sample_calls}, and \code{qc} with the same provenance metadata.}
+\code{peak_calls}, \code{sample_calls}, and \code{qc} with the same provenance metadata.
+A zero-row canonical profile-evidence artifact is written when omitted.}
+
+\item{profile_rules}{Optional canonical \code{pcr_profile_rules} object. When
+supplied and non-empty, it is exported as \code{profile_rules.csv}/\code{.tsv} and
+\code{provenance_profile_rules_supplied} is recorded \code{TRUE}; otherwise a
+zero-row canonical rules artifact is written and the field is \code{FALSE}, so
+absence of calibrated rules is explicit rather than inferable only from a
+missing file.}
 }
 \value{
 A \code{pcr_export_artifacts} object describing written artifact paths.

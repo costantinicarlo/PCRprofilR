@@ -224,12 +224,18 @@ stages:
       - qc_unchanged_consumes_call_state_only
       - replicate_layer_recognizes_new_review_states
       - backward_compatible_wrappers_unaffected
+      - audit_corrective_patch_merged_and_tested
     issues:
       - id: S08-01
         file: .github/issues/stage-0.8/01-pairwise-profile-evidence-peak-balance.md
-        status: open
+        status: closed
         depends_on:
           - S07-07
+      - id: S08-02
+        file: .github/issues/stage-0.8/02-audit-corrective-patch.md
+        status: in_progress
+        depends_on:
+          - S08-01
 
 state_values:
   issue_status:

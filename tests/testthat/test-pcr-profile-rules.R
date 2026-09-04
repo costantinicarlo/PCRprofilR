@@ -1,4 +1,4 @@
-test_that("as_pcr_profile_rules constructs successfully with valid minimal rules", {
+test_that("as_pcr_profile_rules constructs successfully with a validated hybrid rule when all explicit parameters are supplied", {
     rules <- PCRprofilR:::pcr_profile_rules(data.frame(
         assay_id = "assay-1",
         profile_id = "gambiae_arabiensis_hybrid",
@@ -8,11 +8,30 @@ test_that("as_pcr_profile_rules constructs successfully with valid minimal rules
         calibration_status = "validated",
         expected_log2_ratio = 0,
         max_abs_log2_deviation = 1,
+        min_evidence_zone_a = "above_confirmatory",
+        min_evidence_zone_b = "above_confirmatory",
+        rule_version = "1",
         stringsAsFactors = FALSE
     ))
 
     expect_s3_class(rules, "pcr_profile_rules")
     expect_identical(rules$calibration_status[[1]], "validated")
+    expect_identical(rules$min_evidence_zone_a[[1]], "above_confirmatory")
+    expect_identical(rules$rule_version[[1]], "1")
+})
+
+test_that("as_pcr_profile_rules constructs successfully with a minimal pending hybrid rule", {
+    rules <- PCRprofilR:::pcr_profile_rules(data.frame(
+        assay_id = "assay-1",
+        profile_id = "gambiae_arabiensis_hybrid",
+        target_a = "gambiae",
+        target_b = "arabiensis",
+        profile_type = "hybrid",
+        stringsAsFactors = FALSE
+    ))
+
+    expect_s3_class(rules, "pcr_profile_rules")
+    expect_identical(rules$calibration_status[[1]], "pending")
     expect_identical(rules$min_evidence_zone_a[[1]], "above_confirmatory")
     expect_identical(rules$rule_version[[1]], "1")
 })
