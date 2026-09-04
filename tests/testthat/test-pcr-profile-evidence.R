@@ -73,7 +73,7 @@ test_that("balance outcome does not influence representative peak selection", {
     expect_identical(evidence$balance_status[[1]], NA_character_)
 })
 
-test_that("the same physical peak cannot support both members of a hybrid profile", {
+test_that("no rule + duplicate physical peak resolves as unresolved review, not balance review", {
     overlap_assay <- .pf_assay(
         assay_id = c("assay-1", "assay-1"),
         target_id = c("gambiae", "arabiensis"),
@@ -93,12 +93,50 @@ test_that("the same physical peak cannot support both members of a hybrid profil
     peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, overlap_assay)
     evidence <- PCRprofilR:::pcr_profile_evidence(peak_calls)
 
-    expect_identical(evidence$profile_rule_status[[1]], "balance_not_evaluable")
-    expect_true(evidence$duplicate_physical_peak[[1]])
+    # profile_rule_status describes the rule (there is none); profile_structure_status
+    # is the separate, machine-readable record of the duplicated physical peak.
+    expect_identical(evidence$profile_rule_status[[1]], "rule_missing")
+    expect_identical(evidence$profile_structure_status[[1]], "duplicate_physical_peak")
 
     calls <- PCRprofilR:::pcr_sample_calls(peak_calls)
+    expect_identical(calls$call_state[[1]], "dual_target_unresolved_review")
+})
+
+test_that("recognised hybrid rule + duplicate physical peak resolves as balance review", {
+    overlap_assay <- .pf_assay(
+        assay_id = c("assay-1", "assay-1"),
+        target_id = c("gambiae", "arabiensis"),
+        expected_size_bp = c(390, 385),
+        lower_size_bp = c(380, 375),
+        upper_size_bp = c(400, 395),
+        min_concentration = c(0.2, 0.2),
+        confirm_concentration = c(0.3, 0.3),
+        biological_label = c("gambiae", "arabiensis"),
+        rule_group = c("species", "species")
+    )
+    peaks <- .pf_peaks(
+        run_id = "run-1", plate_id = "plate-1", well_id = "A05b", sample_id = "S5b",
+        peak_id = "peak-1", size_bp = 390, concentration = 0.5,
+        raw_file = "run.csv", instrument = "bioanalyzer"
+    )
+    rules <- .pf_rules(
+        assay_id = "assay-1", profile_id = "gambiae_arabiensis_hybrid",
+        target_a = "gambiae", target_b = "arabiensis", profile_type = "hybrid",
+        calibration_status = "validated", expected_log2_ratio = 0, max_abs_log2_deviation = 1,
+        min_evidence_zone_a = "above_confirmatory", min_evidence_zone_b = "above_confirmatory",
+        rule_version = "1"
+    )
+    peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, overlap_assay)
+    evidence <- PCRprofilR:::pcr_profile_evidence(peak_calls, rules)
+
+    expect_identical(evidence$profile_rule_status[[1]], "calibration_validated")
+    expect_identical(evidence$profile_structure_status[[1]], "duplicate_physical_peak")
+    expect_identical(evidence$balance_status[[1]], "not_evaluable")
+
+    calls <- PCRprofilR:::pcr_sample_calls(peak_calls, rules)
     expect_identical(calls$call_state[[1]], "dual_target_balance_review")
 })
+
 
 test_that("equal concentrations with expected log2 ratio 0 give a perfect balance score", {
     peaks <- .pf_peaks(
@@ -109,7 +147,8 @@ test_that("equal concentrations with expected log2 ratio 0 give a perfect balanc
     rules <- .pf_rules(
         assay_id = "assay-1", profile_id = "gambiae_arabiensis_hybrid",
         target_a = "gambiae", target_b = "arabiensis", profile_type = "hybrid",
-        calibration_status = "validated", expected_log2_ratio = 0, max_abs_log2_deviation = 1
+        calibration_status = "validated", expected_log2_ratio = 0, max_abs_log2_deviation = 1,
+        min_evidence_zone_a = "above_confirmatory", min_evidence_zone_b = "above_confirmatory", rule_version = "1"
     )
     peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, .pf_two_target_assay())
     evidence <- PCRprofilR:::pcr_profile_evidence(peak_calls, rules)
@@ -160,7 +199,7 @@ test_that("an order-of-magnitude imbalance is represented correctly", {
         assay_id = "assay-1", profile_id = "gambiae_arabiensis_hybrid",
         target_a = "gambiae", target_b = "arabiensis", profile_type = "hybrid",
         calibration_status = "validated", expected_log2_ratio = 0, max_abs_log2_deviation = 0.5,
-        min_evidence_zone_a = "analytical_to_confirmatory", min_evidence_zone_b = "analytical_to_confirmatory"
+        min_evidence_zone_a = "analytical_to_confirmatory", min_evidence_zone_b = "analytical_to_confirmatory", rule_version = "1"
     )
     peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, weak_assay)
     evidence <- PCRprofilR:::pcr_profile_evidence(peak_calls, rules)
@@ -183,7 +222,8 @@ test_that("a non-zero expected pair bias is handled correctly", {
     rules <- .pf_rules(
         assay_id = "assay-1", profile_id = "gambiae_arabiensis_hybrid",
         target_a = "gambiae", target_b = "arabiensis", profile_type = "hybrid",
-        calibration_status = "validated", expected_log2_ratio = 1, max_abs_log2_deviation = 0.25
+        calibration_status = "validated", expected_log2_ratio = 1, max_abs_log2_deviation = 0.25,
+        min_evidence_zone_a = "above_confirmatory", min_evidence_zone_b = "above_confirmatory", rule_version = "1"
     )
     peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, .pf_two_target_assay())
     evidence <- PCRprofilR:::pcr_profile_evidence(peak_calls, rules)
@@ -227,7 +267,8 @@ test_that("validated hybrid rule with a weak target produces dual_target_weak_re
     rules <- .pf_rules(
         assay_id = "assay-1", profile_id = "gambiae_arabiensis_hybrid",
         target_a = "gambiae", target_b = "arabiensis", profile_type = "hybrid",
-        calibration_status = "validated", expected_log2_ratio = 0, max_abs_log2_deviation = 5
+        calibration_status = "validated", expected_log2_ratio = 0, max_abs_log2_deviation = 5,
+        min_evidence_zone_a = "above_confirmatory", min_evidence_zone_b = "above_confirmatory", rule_version = "1"
     )
     peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, .pf_two_target_assay())
     calls <- PCRprofilR:::pcr_sample_calls(peak_calls, rules)
@@ -295,7 +336,8 @@ test_that("evaluate_pcr_profiles produces a pcr_profile_evidence object and inte
     rules <- .pf_rules(
         assay_id = "assay-1", profile_id = "gambiae_arabiensis_hybrid",
         target_a = "gambiae", target_b = "arabiensis", profile_type = "hybrid",
-        calibration_status = "validated", expected_log2_ratio = 0, max_abs_log2_deviation = 1
+        calibration_status = "validated", expected_log2_ratio = 0, max_abs_log2_deviation = 1,
+        min_evidence_zone_a = "above_confirmatory", min_evidence_zone_b = "above_confirmatory", rule_version = "1"
     )
     peak_calls <- PCRprofilR::detect_pcr_peaks(peaks, .pf_two_target_assay())
     profile_rules <- PCRprofilR::as_pcr_profile_rules(rules)
