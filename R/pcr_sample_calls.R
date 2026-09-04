@@ -1,14 +1,18 @@
-.pcr_dual_target_call_state <- function(profile_rule_status, balance_status, strength_status) {
+.pcr_dual_target_call_state <- function(profile_rule_status, profile_structure_status, balance_status, strength_status) {
     dplyr::case_when(
         profile_rule_status == "rule_missing" ~ "dual_target_unresolved_review",
-        profile_rule_status == "balance_not_evaluable" ~ "dual_target_balance_review",
         profile_rule_status == "forbidden_profile" ~ "ambiguous_review",
         profile_rule_status == "mixed_profile" ~ "mixed_profile_candidate",
+        # A duplicated physical peak affects structural/balance evaluability, not rule
+        # existence, so it is checked as its own axis rather than as a rule status.
+        profile_structure_status == "duplicate_physical_peak" ~ "dual_target_balance_review",
         profile_rule_status == "calibration_pending" ~ "dual_target_balance_review",
         profile_rule_status == "calibration_validated" & strength_status == "fail" ~ "dual_target_weak_review",
         profile_rule_status == "calibration_validated" & balance_status == "not_evaluable" ~ "dual_target_balance_review",
         profile_rule_status == "calibration_validated" & balance_status == "fail" ~ "dual_target_imbalanced_review",
-        profile_rule_status == "calibration_validated" & balance_status == "pass" ~ "hybrid_candidate",
+        # Explicit, conjunctive requirement: NA/unknown strength_status (e.g. malformed or
+        # forged evidence) never matches this branch and falls through to a review state.
+        profile_rule_status == "calibration_validated" & strength_status == "pass" & balance_status == "pass" ~ "hybrid_candidate",
         TRUE ~ "dual_target_unresolved_review"
     )
 }
@@ -18,7 +22,7 @@ pcr_sample_calls <- function(peak_calls, profile_rules = NULL, profile_evidence 
         peak_calls <- pcr_peak_calls(peak_calls)
     }
 
-    required_cols <- c("run_id", "plate_id", "well_id", "sample_id", "target_id", "biological_label", "matched", "within_window", "evidence_zone")
+    required_cols <- c("run_id", "plate_id", "well_id", "sample_id", "assay_id", "target_id", "biological_label", "matched", "within_window", "evidence_zone")
     missing_cols <- setdiff(required_cols, names(peak_calls))
     if (length(missing_cols) > 0) {
         stop(
@@ -31,14 +35,24 @@ pcr_sample_calls <- function(peak_calls, profile_rules = NULL, profile_evidence 
         peak_calls$target_role <- "optional"
     }
 
+    if (!is.null(profile_rules) && !is.null(profile_evidence)) {
+        stop(
+            "pcr_sample_calls accepts either profile_rules (rules to compute evidence from) or profile_evidence (precomputed, validated evidence), not both",
+            call. = FALSE
+        )
+    }
+
     if (is.null(profile_evidence)) {
         profile_evidence <- pcr_profile_evidence(peak_calls, profile_rules = profile_rules)
     } else if (!inherits(profile_evidence, "pcr_profile_evidence")) {
         stop("profile_evidence must be a pcr_profile_evidence object", call. = FALSE)
     }
+    # Always validated, even for internally generated evidence and even when the object
+    # already inherits the expected class: the class alone must never be trusted.
+    validate_pcr_profile_evidence(profile_evidence, peak_calls = peak_calls)
 
     target_hits <- peak_calls |>
-        dplyr::group_by(.data$run_id, .data$plate_id, .data$well_id, .data$sample_id, .data$target_id) |>
+        dplyr::group_by(.data$run_id, .data$plate_id, .data$well_id, .data$sample_id, .data$assay_id, .data$target_id) |>
         dplyr::summarise(
             target_matched = any(.data$matched),
             target_biological_label = dplyr::first(.data$biological_label),
@@ -54,7 +68,7 @@ pcr_sample_calls <- function(peak_calls, profile_rules = NULL, profile_evidence 
         )
 
     sample_summary <- target_hits |>
-        dplyr::group_by(.data$run_id, .data$plate_id, .data$well_id, .data$sample_id) |>
+        dplyr::group_by(.data$run_id, .data$plate_id, .data$well_id, .data$sample_id, .data$assay_id) |>
         dplyr::summarise(
             matched_target_count = sum(.data$target_matched),
             matched_targets = paste(.data$target_id[.data$target_matched], collapse = ";"),
@@ -79,6 +93,9 @@ pcr_sample_calls <- function(peak_calls, profile_rules = NULL, profile_evidence 
                 sum(.data$target_role == "forbidden" & .data$target_matched) > 0 ~ "ambiguous_review",
                 sum(.data$target_role == "required" & !.data$target_matched) > 0 & sum(.data$target_matched) > 0 ~ "ambiguous_review",
                 sum(.data$target_matched) > 2 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) > 2 ~ "mixed_profile_candidate",
+                # Pairwise profile evidence is only computed for exactly two matched targets
+                # representing exactly two labels (see pcr_profile_evidence()); this predicate
+                # must match exactly, or evidence and final call could disagree.
                 sum(.data$target_matched) == 2 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) == 2 ~ "__dual_target_pending__",
                 sum(.data$target_matched) > 1 & dplyr::n_distinct(.data$target_biological_label[.data$target_matched]) > 1 ~ "ambiguous_review",
                 any(.data$target_best_zone == "above_confirmatory") ~ "positive",
@@ -92,26 +109,24 @@ pcr_sample_calls <- function(peak_calls, profile_rules = NULL, profile_evidence 
         )
 
     profile_tbl <- tibble::as_tibble(profile_evidence)
-    join_keys <- c("run_id", "plate_id", "well_id", "sample_id")
-    profile_fields <- intersect(c(join_keys, "profile_rule_status", "balance_status", "strength_status"), names(profile_tbl))
+    join_keys <- .pcr_interpreted_sample_key_cols
+    profile_fields <- intersect(c(join_keys, "profile_rule_status", "profile_structure_status", "balance_status", "strength_status"), names(profile_tbl))
     sample_summary <- dplyr::left_join(
         sample_summary,
         dplyr::select(profile_tbl, dplyr::all_of(profile_fields)),
-        by = join_keys
+        by = join_keys,
+        relationship = "many-to-one"
     )
 
     sample_summary <- dplyr::mutate(
         sample_summary,
         call_state = dplyr::if_else(
             .data$call_state == "__dual_target_pending__",
-            .pcr_dual_target_call_state(.data$profile_rule_status, .data$balance_status, .data$strength_status),
+            .pcr_dual_target_call_state(.data$profile_rule_status, .data$profile_structure_status, .data$balance_status, .data$strength_status),
             .data$call_state
         ),
-        threshold_status = dplyr::if_else(.data$call_state %in% c("positive", "negative"), .data$call_state, "review"),
-        review_required = .data$call_state %in% c(
-            "ambiguous_review", "weak_positive", "indeterminate_review", "hybrid_candidate", "mixed_profile_candidate",
-            "dual_target_unresolved_review", "dual_target_weak_review", "dual_target_imbalanced_review", "dual_target_balance_review"
-        ),
+        threshold_status = dplyr::if_else(.data$call_state %in% .pcr_terminal_call_states, .data$call_state, "review"),
+        review_required = .data$call_state %in% .pcr_review_call_states,
         hybrid_candidate = .data$call_state == "hybrid_candidate",
         mixed_profile_candidate = .data$call_state == "mixed_profile_candidate"
     )
@@ -122,3 +137,4 @@ pcr_sample_calls <- function(peak_calls, profile_rules = NULL, profile_evidence 
     class(sample_summary) <- c("pcr_sample_calls", class(sample_summary))
     sample_summary
 }
+
