@@ -19,7 +19,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 Imports: 
-    dplyr,
+    dplyr (>= 1.1.1),
     ggplot2,
     rlang,
     stringr,

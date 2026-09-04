@@ -20,11 +20,12 @@ plot_pcr_evidence <- function(peak_calls, sample_calls = NULL, qc = NULL) {
         if (!inherits(sample_calls, "pcr_sample_calls")) {
             stop("sample_calls must be a pcr_sample_calls object", call. = FALSE)
         }
-        sample_fields <- intersect(c(join_keys, "call", "call_state", "review_required", "rule_status"), names(sample_calls))
+        sample_join_keys <- intersect(.pcr_interpreted_sample_key_cols, intersect(names(plot_tbl), names(sample_calls)))
+        sample_fields <- intersect(c(sample_join_keys, "call", "call_state", "review_required", "rule_status"), names(sample_calls))
         plot_tbl <- dplyr::left_join(
             plot_tbl,
             dplyr::select(tibble::as_tibble(sample_calls), dplyr::all_of(sample_fields)),
-            by = join_keys
+            by = sample_join_keys
         )
     }
 

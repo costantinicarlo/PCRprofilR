@@ -23,7 +23,7 @@ pcr_replicate_summary <- function(sample_calls, qc = NULL, replicate_keys = c("s
         }
 
         qc_tbl <- tibble::as_tibble(qc)
-        join_keys <- intersect(c("run_id", "plate_id", "well_id", "sample_id"), names(calls_tbl))
+        join_keys <- intersect(.pcr_interpreted_sample_key_cols, intersect(names(calls_tbl), names(qc_tbl)))
 
         qc_fields <- c(join_keys, "qc_status", "contamination_candidate")
         qc_fields <- intersect(qc_fields, names(qc_tbl))
@@ -49,11 +49,7 @@ pcr_replicate_summary <- function(sample_calls, qc = NULL, replicate_keys = c("s
             replicate_concordance = dplyr::if_else(dplyr::n_distinct(.data$call_state) == 1L, "concordant", "discordant"),
             consensus_call_state = dplyr::case_when(
                 dplyr::n_distinct(.data$call_state) == 1L ~ dplyr::first(.data$call_state),
-                any(.data$call_state %in% c(
-                    "mixed_profile_candidate", "hybrid_candidate", "ambiguous_review",
-                    "dual_target_unresolved_review", "dual_target_weak_review",
-                    "dual_target_imbalanced_review", "dual_target_balance_review"
-                )) ~ "review_discordant",
+                any(.data$call_state %in% .pcr_multi_target_call_states) ~ "review_discordant",
                 any(.data$call_state == "positive") & all(.data$call_state %in% c("positive", "weak_positive")) ~ "positive_with_review",
                 TRUE ~ "review_discordant"
             ),
