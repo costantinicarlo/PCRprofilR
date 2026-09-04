@@ -132,6 +132,9 @@ validate_pcr_profile_evidence <- function(x, peak_calls = NULL) {
     if (any(!rule_missing & !nzchar(x$rule_version))) {
         stop("pcr_profile_evidence column 'rule_version' must be non-empty whenever profile_rule_status is not 'rule_missing'", call. = FALSE)
     }
+    if (any(!rule_missing & !nzchar(x$profile_id))) {
+        stop("pcr_profile_evidence column 'profile_id' must be non-empty whenever profile_rule_status is not 'rule_missing'", call. = FALSE)
+    }
 
     has_rule <- !rule_missing
     expected_profile_type <- dplyr::case_when(

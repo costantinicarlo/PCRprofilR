@@ -578,6 +578,22 @@ test_that("balance_score inconsistent with abs_log2_deviation is rejected", {
     expect_error(PCRprofilR:::validate_pcr_profile_evidence(forged_na_score), "non-missing")
 })
 
+test_that("empty-string profile_id is rejected when a rule applies", {
+    peaks <- .ah_peaks(
+        run_id = "run-1", plate_id = "plate-1", well_id = "A03", sample_id = "S3",
+        peak_id = c("peak-1", "peak-2"), size_bp = c(390, 315), concentration = c(4, 4),
+        raw_file = rep("run.csv", 2), instrument = rep("bioanalyzer", 2)
+    )
+    peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, .ah_two_target_assay())
+    rules <- .ah_rules(assay_id = "assay-1", profile_id = "p1", target_a = "gambiae", target_b = "arabiensis", profile_type = "mixed", calibration_status = "not_applicable")
+    evidence <- PCRprofilR:::pcr_profile_evidence(peak_calls, rules)
+    expect_identical(evidence$profile_rule_status[[1]], "mixed_profile")
+
+    forged_empty_id <- evidence
+    forged_empty_id$profile_id <- ""
+    expect_error(PCRprofilR:::validate_pcr_profile_evidence(forged_empty_id), "profile_id.*non-empty")
+})
+
 test_that("pcr_export_artifacts rejects non-data-frame profile_rules/profile_evidence with a clear error", {
     peak_calls <- tibble::tibble(run_id = "run-1", assay_id = "assay-1", target_id = "target-a", sample_id = "S1", matched = TRUE)
     class(peak_calls) <- c("pcr_peak_calls", class(peak_calls))
