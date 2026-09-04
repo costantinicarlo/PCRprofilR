@@ -3,7 +3,8 @@
 Goal: replace the unconditional "two matched biological labels -> `hybrid_candidate`" rule with a deterministic, auditable, calibratable pairwise profile-evidence layer, so dual-target calls (hybrid, mixed, forbidden) are backed by explicit rules and continuous peak-balance evidence rather than label counting alone.
 
 Checklist:
-- [ ] 01-pairwise-profile-evidence-peak-balance.md
+- [x] 01-pairwise-profile-evidence-peak-balance.md
+- [ ] 02-audit-corrective-patch.md
 
 Stage completion gates:
 - [ ] `pcr_profile_rules` canonical object exists with constructor/validator and rejects invalid/duplicate/unordered rule definitions
@@ -16,3 +17,4 @@ Stage completion gates:
 - [ ] Replicate layer updated to include new review states in `review_replicates`
 - [ ] Backward-compatible wrappers (`PCRpositive()`, `PCRoutcome()`, `PCRexplorer()`, `PCRpherogram()`) remain usable
 - [ ] NEWS entry documents the removal of the unconditional two-label hybrid rule
+- [ ] Post-merge audit corrective patch (assay-safety, fail-closed hybrid gating, provenance completeness, documentation/security hardening) merged and tested; see `02-audit-corrective-patch.md`
