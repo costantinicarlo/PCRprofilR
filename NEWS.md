@@ -1,5 +1,12 @@
 # PCRprofilR News
 
+## PCRprofilR 0.3.1 — development, unreleased
+
+This is the post-implementation audit-hardening increment for the stage-0.8
+profile-evidence/peak-balance layer recorded as PCRprofilR 0.3.0. **PCRprofilR
+0.3.1 is untagged and unreleased.** Corrections from the independent
+post-merge audit accumulate in this section as they are implemented.
+
 ## PCRprofilR 0.3.0 — unreleased development milestone
 
 This section records the stage-0.8 pairwise profile-evidence and peak-balance
