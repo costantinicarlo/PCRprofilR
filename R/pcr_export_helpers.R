@@ -152,6 +152,13 @@ pcr_export_artifacts <- function(peak_calls, sample_calls, qc, output_dir, forma
     .write_pcr_table(sample_calls_out, files[["sample_calls"]], format = format)
     .write_pcr_table(qc_out, files[["qc"]], format = format)
 
+    if (!is.null(profile_evidence) && !inherits(profile_evidence, "data.frame")) {
+        stop("profile_evidence must be a data frame (typically a pcr_profile_evidence object) or NULL", call. = FALSE)
+    }
+    if (!is.null(profile_rules) && !inherits(profile_rules, "data.frame")) {
+        stop("profile_rules must be a data frame (typically a pcr_profile_rules object) or NULL", call. = FALSE)
+    }
+
     profile_evidence_out <- if (!is.null(profile_evidence)) {
         .with_provenance(profile_evidence, provenance)
     } else {

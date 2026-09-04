@@ -109,6 +109,51 @@ validate_pcr_profile_evidence <- function(x, peak_calls = NULL) {
         }
     }
 
+    # profile_id/profile_type/calibration_status/rule_version must be character, and must
+    # agree with profile_rule_status: all NA when no rule applies, all populated and
+    # mutually consistent with the specific rule outcome when one does. This prevents
+    # malformed/forged evidence from carrying rule metadata that contradicts its own
+    # profile_rule_status.
+    for (col in c("profile_id", "profile_type", "calibration_status", "rule_version")) {
+        if (!is.character(x[[col]])) {
+            stop(sprintf("pcr_profile_evidence column '%s' must be a character vector", col), call. = FALSE)
+        }
+    }
+
+    rule_missing <- x$profile_rule_status == "rule_missing"
+    rule_metadata_populated <- !is.na(x$profile_id) | !is.na(x$profile_type) | !is.na(x$calibration_status) | !is.na(x$rule_version)
+    rule_metadata_missing <- is.na(x$profile_id) | is.na(x$profile_type) | is.na(x$calibration_status) | is.na(x$rule_version)
+    if (any(rule_missing & rule_metadata_populated)) {
+        stop("pcr_profile_evidence requires profile_id/profile_type/calibration_status/rule_version to be NA whenever profile_rule_status is 'rule_missing'", call. = FALSE)
+    }
+    if (any(!rule_missing & rule_metadata_missing)) {
+        stop("pcr_profile_evidence requires profile_id/profile_type/calibration_status/rule_version to be non-missing whenever profile_rule_status is not 'rule_missing'", call. = FALSE)
+    }
+    if (any(!rule_missing & !nzchar(x$rule_version))) {
+        stop("pcr_profile_evidence column 'rule_version' must be non-empty whenever profile_rule_status is not 'rule_missing'", call. = FALSE)
+    }
+
+    has_rule <- !rule_missing
+    expected_profile_type <- dplyr::case_when(
+        x$profile_rule_status == "forbidden_profile" ~ "forbidden",
+        x$profile_rule_status == "mixed_profile" ~ "mixed",
+        x$profile_rule_status %in% c("calibration_pending", "calibration_validated") ~ "hybrid",
+        TRUE ~ NA_character_
+    )
+    if (any(has_rule & x$profile_type != expected_profile_type)) {
+        stop("pcr_profile_evidence column 'profile_type' is inconsistent with profile_rule_status", call. = FALSE)
+    }
+
+    expected_calibration_status <- dplyr::case_when(
+        x$profile_rule_status %in% c("forbidden_profile", "mixed_profile") ~ "not_applicable",
+        x$profile_rule_status == "calibration_pending" ~ "pending",
+        x$profile_rule_status == "calibration_validated" ~ "validated",
+        TRUE ~ NA_character_
+    )
+    if (any(has_rule & x$calibration_status != expected_calibration_status)) {
+        stop("pcr_profile_evidence column 'calibration_status' is inconsistent with profile_rule_status", call. = FALSE)
+    }
+
     if (!is.character(x$dominance_status) || any(is.na(x$dominance_status)) || any(!x$dominance_status %in% pcr_profile_evidence_dominance_statuses)) {
         stop(sprintf("pcr_profile_evidence column 'dominance_status' must contain only: %s", paste(pcr_profile_evidence_dominance_statuses, collapse = ", ")), call. = FALSE)
     }
@@ -139,9 +184,16 @@ validate_pcr_profile_evidence <- function(x, peak_calls = NULL) {
 
     evaluated <- is_validated & !is.na(x$balance_status) & x$balance_status != "not_evaluable"
     if (any(evaluated)) {
+        if (any(is.na(x$observed_log2_ratio[evaluated]) | is.na(x$expected_log2_ratio[evaluated]) | is.na(x$max_abs_log2_deviation[evaluated]) | is.na(x$abs_log2_deviation[evaluated]) | is.na(x$balance_score[evaluated]))) {
+            stop("pcr_profile_evidence requires non-missing observed_log2_ratio/expected_log2_ratio/max_abs_log2_deviation/abs_log2_deviation/balance_score whenever balance_status is 'pass' or 'fail'", call. = FALSE)
+        }
         recomputed <- abs(x$observed_log2_ratio[evaluated] - x$expected_log2_ratio[evaluated])
-        if (any(!is.finite(recomputed)) || any(abs(recomputed - x$abs_log2_deviation[evaluated]) > 1e-8, na.rm = TRUE)) {
+        if (any(!is.finite(recomputed)) || any(abs(recomputed - x$abs_log2_deviation[evaluated]) > 1e-8)) {
             stop("pcr_profile_evidence 'abs_log2_deviation' is not consistent with observed_log2_ratio and expected_log2_ratio", call. = FALSE)
+        }
+        expected_score <- 2^(-recomputed)
+        if (any(abs(expected_score - x$balance_score[evaluated]) > 1e-8)) {
+            stop("pcr_profile_evidence 'balance_score' is not consistent with abs_log2_deviation", call. = FALSE)
         }
         expected_status <- ifelse(recomputed <= x$max_abs_log2_deviation[evaluated], "pass", "fail")
         if (any(expected_status != x$balance_status[evaluated])) {

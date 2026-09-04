@@ -515,3 +515,84 @@ test_that("batch mode works with a real profile_rules_path and writes profile_ru
     expect_length(rules_file, 1)
     expect_true(file.exists(rules_file))
 })
+
+# --- PR #5 review follow-ups ---------------------------------------------------
+
+test_that("rule metadata inconsistent with profile_rule_status is rejected", {
+    peaks <- .ah_peaks(
+        run_id = "run-1", plate_id = "plate-1", well_id = "A01", sample_id = "S1",
+        peak_id = c("peak-1", "peak-2"), size_bp = c(390, 315), concentration = c(4, 4),
+        raw_file = rep("run.csv", 2), instrument = rep("bioanalyzer", 2)
+    )
+    peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, .ah_two_target_assay())
+    evidence <- PCRprofilR:::pcr_profile_evidence(peak_calls)
+    expect_identical(evidence$profile_rule_status[[1]], "rule_missing")
+
+    # rule_missing rows must carry NA rule metadata.
+    forged_populated <- evidence
+    forged_populated$profile_type <- "hybrid"
+    expect_error(PCRprofilR:::validate_pcr_profile_evidence(forged_populated), "profile_id/profile_type/calibration_status/rule_version")
+
+    # A row claiming a rule applies must have fully populated, non-empty rule metadata.
+    rules <- .ah_rules(assay_id = "assay-1", profile_id = "p1", target_a = "gambiae", target_b = "arabiensis", profile_type = "mixed", calibration_status = "not_applicable")
+    evidence_mixed <- PCRprofilR:::pcr_profile_evidence(peak_calls, rules)
+    expect_identical(evidence_mixed$profile_rule_status[[1]], "mixed_profile")
+
+    forged_missing <- evidence_mixed
+    forged_missing$rule_version <- NA_character_
+    expect_error(PCRprofilR:::validate_pcr_profile_evidence(forged_missing), "non-missing")
+
+    # profile_type must agree with profile_rule_status (mixed_profile -> "mixed").
+    forged_type <- evidence_mixed
+    forged_type$profile_type <- "forbidden"
+    expect_error(PCRprofilR:::validate_pcr_profile_evidence(forged_type), "profile_type.*inconsistent")
+
+    # calibration_status must agree with profile_rule_status (mixed_profile -> "not_applicable").
+    forged_calibration <- evidence_mixed
+    forged_calibration$calibration_status <- "validated"
+    expect_error(PCRprofilR:::validate_pcr_profile_evidence(forged_calibration), "calibration_status.*inconsistent")
+})
+
+test_that("balance_score inconsistent with abs_log2_deviation is rejected", {
+    peaks <- .ah_peaks(
+        run_id = "run-1", plate_id = "plate-1", well_id = "A02", sample_id = "S2",
+        peak_id = c("peak-1", "peak-2"), size_bp = c(390, 315), concentration = c(4, 4),
+        raw_file = rep("run.csv", 2), instrument = rep("bioanalyzer", 2)
+    )
+    rules <- .ah_rules(
+        assay_id = "assay-1", profile_id = "p1", target_a = "gambiae", target_b = "arabiensis",
+        profile_type = "hybrid", calibration_status = "validated",
+        expected_log2_ratio = 0, max_abs_log2_deviation = 1,
+        min_evidence_zone_a = "above_confirmatory", min_evidence_zone_b = "above_confirmatory", rule_version = "1"
+    )
+    peak_calls <- PCRprofilR:::pcr_peak_calls(peaks, .ah_two_target_assay())
+    evidence <- PCRprofilR:::pcr_profile_evidence(peak_calls, rules)
+    expect_identical(evidence$balance_status[[1]], "pass")
+
+    forged_score <- evidence
+    forged_score$balance_score <- forged_score$balance_score + 10
+    expect_error(PCRprofilR:::validate_pcr_profile_evidence(forged_score), "balance_score")
+
+    forged_na_score <- evidence
+    forged_na_score$balance_score <- NA_real_
+    expect_error(PCRprofilR:::validate_pcr_profile_evidence(forged_na_score), "non-missing")
+})
+
+test_that("pcr_export_artifacts rejects non-data-frame profile_rules/profile_evidence with a clear error", {
+    peak_calls <- tibble::tibble(run_id = "run-1", assay_id = "assay-1", target_id = "target-a", sample_id = "S1", matched = TRUE)
+    class(peak_calls) <- c("pcr_peak_calls", class(peak_calls))
+    sample_calls <- tibble::tibble(run_id = "run-1", sample_id = "S1", call = "positive", call_state = "positive", review_required = FALSE)
+    class(sample_calls) <- c("pcr_sample_calls", class(sample_calls))
+    qc <- tibble::tibble(run_id = "run-1", sample_id = "S1", qc_status = "pass", contamination_candidate = FALSE)
+    class(qc) <- c("pcr_qc", class(qc))
+
+    expect_error(
+        PCRprofilR:::pcr_export_artifacts(peak_calls, sample_calls, qc, tempfile(), profile_rules = list()),
+        "profile_rules must be a data frame"
+    )
+    expect_error(
+        PCRprofilR:::pcr_export_artifacts(peak_calls, sample_calls, qc, tempfile(), profile_evidence = list()),
+        "profile_evidence must be a data frame"
+    )
+})
+
