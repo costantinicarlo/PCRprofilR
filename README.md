@@ -8,7 +8,13 @@
 
 PCRprofilR is an R package for deterministic, auditable interpretation of PCR fragment profiles from capillary electrophoresis outputs.
 
-The current development version focuses on a stable interpretation core: raw fragment peaks are normalized, compared with an explicit assay specification, converted into peak-level evidence, summarized into sample calls, checked by QC rules, and exported with provenance.
+The current development version is **0.3.1**, an untagged, unreleased post-audit hardening increment over the 0.3.0 stage-0.8 milestone. Neither 0.3.0 nor 0.3.1 has been tagged or released; see `NEWS.md` for the version history and rationale. PCRprofilR distinguishes three separate identifiers in exported provenance:
+
+- `package_version`: the installed PCRprofilR version (`0.3.1`).
+- `interpretation_model_version`: identifies the scientific interpretation algorithm itself (currently `"pairwise-profile-balance-v1"`), independent of package version.
+- `rule_version`: identifies a specific target-pair calibration rule inside a `pcr_profile_rules` table.
+
+The interpretation core: raw fragment peaks are normalized, compared with an explicit, single-assay specification, converted into peak-level evidence, evaluated for pairwise profile balance where two targets are detected, summarized into sample calls, checked by QC rules, and exported with full provenance.
 
 The package is still pre-1.0. The legacy plotting and calling helpers remain available, but new work should use the curated public workflow described below.
 
@@ -52,7 +58,9 @@ Use these functions for new deterministic workflows:
 - `run_pcr_batch()`: run the deterministic workflow from input files.
 - `report_pcr_calls()`: export evidence, calls, QC, summary files, and provenance.
 
-> **Note:** detecting two matched biological targets is no longer sufficient for a `hybrid_candidate` call. An explicit, validated `pcr_profile_rules` entry with a passing pair-specific balance check is required; otherwise the sample resolves to a `dual_target_*_review` state. See `NEWS.md` for details.
+> **Note:** detecting two matched biological targets is no longer sufficient for a `hybrid_candidate` call. A `hybrid_candidate` requires an explicit, validated, pair-specific `pcr_profile_rules` entry where both the absolute signal-strength requirement (`strength_status == "pass"`) and the pair-specific balance tolerance (`balance_status == "pass"`) are satisfied; otherwise the sample resolves to a `dual_target_*_review` state. `classify_pcr_samples()`, [evaluate_pcr_profiles()], and any externally supplied `profile_evidence` are always validated with `validate_pcr_profile_evidence()`, so malformed or forged evidence can never "fail open" into `hybrid_candidate`. See `NEWS.md` for details.
+>
+> **One assay per invocation:** a canonical `pcr_assay` object passed to `detect_pcr_peaks()` must represent exactly one `assay_id` with unique `target_id` values. Multi-assay tables are rejected rather than silently combined, because the peak schema has no assay identity of its own to disambiguate them.
 
 Legacy compatibility wrappers are still exported:
 
@@ -112,7 +120,22 @@ assay <- as_pcr_assay(data.frame(
 ))
 
 peak_calls <- detect_pcr_peaks(peaks, assay)
-sample_calls <- classify_pcr_samples(peak_calls)
+
+# Profile rules describe which target pairs are recognized hybrid, mixed, or
+# forbidden combinations. These calibration values are illustrative synthetic
+# examples only, not empirically validated thresholds for any real assay.
+profile_rules <- as_pcr_profile_rules(data.frame(
+  assay_id = "species-assay",
+  profile_id = "gambiae_arabiensis_hybrid",
+  target_a = "gambiae",
+  target_b = "arabiensis",
+  profile_type = "hybrid",
+  calibration_status = "pending", # keep "pending" until pair-specific balance is empirically calibrated
+  stringsAsFactors = FALSE
+))
+
+profile_evidence <- evaluate_pcr_profiles(peak_calls, profile_rules)
+sample_calls <- classify_pcr_samples(peak_calls, profile_evidence = profile_evidence)
 qc <- qc_pcr_run(peaks, sample_calls)
 replicate_summary <- summarize_pcr_replicates(sample_calls, qc = qc)
 
@@ -128,7 +151,7 @@ head(sample_calls[, c(
 head(qc[, c("sample_id", "control_role", "qc_status")])
 ```
 
-For routine runs, write reproducible output files:
+For routine runs, write reproducible output files, including profile evidence and the canonical profile rules actually used:
 
 ```r
 report_pcr_calls(
@@ -137,7 +160,9 @@ report_pcr_calls(
   qc = qc,
   output_dir = "pcr-results",
   format = "csv",
-  write_summary = TRUE
+  write_summary = TRUE,
+  profile_evidence = profile_evidence,
+  profile_rules = profile_rules
 )
 ```
 
@@ -152,8 +177,14 @@ Current sample-level `call_state` values include:
 - `weak_positive`
 - `indeterminate_review`
 - `ambiguous_review`
-- `hybrid_candidate`
 - `mixed_profile_candidate`
+- `dual_target_unresolved_review`: two biological labels detected, but no pairwise profile rule exists for that target pair.
+- `dual_target_balance_review`: a recognized hybrid rule exists but calibration is still `pending`, or peak balance cannot be evaluated (for example, a duplicated physical peak).
+- `dual_target_weak_review`: a validated hybrid rule applies, but one or both targets do not meet its minimum evidence-zone requirement.
+- `dual_target_imbalanced_review`: a validated hybrid rule applies and both targets are strong enough, but the observed peak-concentration balance fails the rule's tolerance.
+- `hybrid_candidate`: a validated, pair-specific rule applies, both targets are sufficiently strong, and the observed balance is compatible with the calibrated expectation.
+
+Multiple detected targets is **not** the same thing as a supported hybrid profile: `hybrid_candidate` requires an explicit, calibrated `pcr_profile_rules` entry, never label counting alone.
 
 Peak evidence records whether a fragment is inside the target size window and whether concentration is below the analytical threshold, between analytical and confirmatory thresholds, or above the confirmatory threshold.
 
@@ -184,13 +215,15 @@ Completed development stages:
 - 0.6: replicate summaries, batch helpers, exports, and provenance.
 - 0.7: package check hygiene, aligned validators, explicit control roles, QC-able malformed input contract, operational rule groups, classified-object plotting, and advanced-layer deferral contract.
 
-The current core is designed to be consumed by future operational layers. Docker/CLI wrappers, Shiny review interfaces, and Bayesian or probabilistic evidence layers are deliberately deferred and must consume the core objects rather than reimplementing scientific interpretation logic.
+Stage 0.8 (pairwise profile-evidence and peak-balance interpretation) is implemented and under post-implementation audit hardening; it is recorded as completed only once all corrective gates in `.github/issues/stage-0.8/` pass. See `.github/issues/stage-0.8/02-audit-corrective-patch.md` for the current corrective work.
+
+The current core is designed to be consumed by future operational layers. Docker/CLI wrappers, Shiny review interfaces, and Bayesian or probabilistic evidence layers are deliberately deferred and must consume the core objects, including `pcr_profile_rules` and `pcr_profile_evidence`, rather than reimplementing scientific interpretation logic.
 
 See:
 
-- `NEWS.md` for user-visible changes.
+- `NEWS.md` for user-visible changes and the 0.2.0/0.3.0/0.3.1 version history.
 - `vignettes/PCRprofilR.Rmd` for the source tutorial.
-- `docs/project-hygiene-audit-2026-06-28.md` for the current repository consistency audit.
+- `docs/project-hygiene-audit-2026-06-28.md` for the repository consistency audit.
 - `docs/advanced-layer-deferral-contract-2026-06-28.md` for the handoff contract for future layers.
 - `.github/issues/manifest.yaml` for the auditable staged development manifest.
 
@@ -207,7 +240,7 @@ For package checks in environments without `rmarkdown` or network access to inst
 
 ```sh
 R CMD build --no-build-vignettes .
-_R_CHECK_FORCE_SUGGESTS_=false R CMD check --no-manual --no-build-vignettes PCRprofilR_0.2.0.tar.gz
+_R_CHECK_FORCE_SUGGESTS_=false R CMD check --no-manual --no-build-vignettes PCRprofilR_0.3.1.tar.gz
 ```
 
-The normal CI workflow installs vignette dependencies and runs package checks through GitHub Actions.
+The normal CI workflow installs vignette dependencies and runs package checks through GitHub Actions against R 4.1 and the current R release.

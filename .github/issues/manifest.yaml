@@ -233,7 +233,7 @@ stages:
           - S07-07
       - id: S08-02
         file: .github/issues/stage-0.8/02-audit-corrective-patch.md
-        status: open
+        status: in_progress
         depends_on:
           - S08-01
 

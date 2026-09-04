@@ -86,8 +86,24 @@ head(
 )
 
 
+## ----profile-rules------------------------------------------------------------
+# Illustrative synthetic thresholds only, not empirically validated for any real assay.
+profile_rules <- as_pcr_profile_rules(data.frame(
+  assay_id = "species-assay",
+  profile_id = "gambiae_arabiensis_hybrid",
+  target_a = "gambiae",
+  target_b = "arabiensis",
+  profile_type = "hybrid",
+  calibration_status = "pending",
+  stringsAsFactors = FALSE
+))
+
+profile_evidence <- evaluate_pcr_profiles(peak_calls, profile_rules)
+head(profile_evidence)
+
+
 ## ----sample-calls-------------------------------------------------------------
-sample_calls <- classify_pcr_samples(peak_calls)
+sample_calls <- classify_pcr_samples(peak_calls, profile_evidence = profile_evidence)
 
 head(sample_calls[, c(
   "well_id",
@@ -138,7 +154,9 @@ head(replicate_summary)
 #   qc = qc,
 #   output_dir = "pcr-results",
 #   format = "csv",
-#   write_summary = TRUE
+#   write_summary = TRUE,
+#   profile_evidence = profile_evidence,
+#   profile_rules = profile_rules
 # )
 
 

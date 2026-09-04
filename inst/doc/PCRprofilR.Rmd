@@ -174,12 +174,34 @@ The key columns are:
 
 This table is the audit trail. The final sample calls are derived from it.
 
+## Step 4b. Evaluate pairwise profile evidence for dual-target samples
+
+When a sample has exactly two matched targets representing two biological labels, `evaluate_pcr_profiles()` computes deterministic, auditable profile-level evidence: which physical peaks were selected to represent each target, the observed and expected concentration balance, and whether the pair-specific rule requirements are met. This layer is what `hybrid_candidate` calls are actually gated on downstream, never label counting alone:
+
+```{r profile-rules}
+# Illustrative synthetic thresholds only, not empirically validated for any real assay.
+profile_rules <- as_pcr_profile_rules(data.frame(
+  assay_id = "species-assay",
+  profile_id = "gambiae_arabiensis_hybrid",
+  target_a = "gambiae",
+  target_b = "arabiensis",
+  profile_type = "hybrid",
+  calibration_status = "pending",
+  stringsAsFactors = FALSE
+))
+
+profile_evidence <- evaluate_pcr_profiles(peak_calls, profile_rules)
+head(profile_evidence)
+```
+
+`calibration_status = "pending"` is the correct state until a target pair's expected balance and tolerance have been estimated from independently confirmed reference samples; it never produces `hybrid_candidate` on its own.
+
 ## Step 5. Turn evidence into sample calls
 
-Now we summarize the peak evidence sample by sample.
+Now we summarize the peak evidence, together with the profile evidence, sample by sample.
 
 ```{r sample-calls}
-sample_calls <- classify_pcr_samples(peak_calls)
+sample_calls <- classify_pcr_samples(peak_calls, profile_evidence = profile_evidence)
 
 head(sample_calls[, c(
   "well_id",
@@ -204,14 +226,21 @@ The main call states are:
 - `negative`: no target evidence;
 - `weak_positive`: target evidence above the analytical threshold but below the confirmatory threshold;
 - `indeterminate_review`: a trace is inside the expected size window but below the analytical threshold;
-- `ambiguous_review`: the pattern conflicts with the assay rules;
-- `hybrid_candidate` or `mixed_profile_candidate`: several biological labels are detected and the profile should be reviewed.
+- `ambiguous_review`: the pattern conflicts with the assay rules, or a target pair is explicitly defined as biologically incompatible;
+- `mixed_profile_candidate`: more than two biological labels are detected, or a target pair is explicitly defined as a mixed (non-hybrid) profile;
+- `dual_target_unresolved_review`: two biological labels are detected but no pairwise profile rule has been supplied for that target pair;
+- `dual_target_balance_review`: a recognised hybrid target pair exists but its balance calibration is still `pending`, or its peak balance cannot be evaluated;
+- `dual_target_weak_review`: a validated hybrid rule applies but one or both targets do not meet the rule's minimum evidence-zone requirement;
+- `dual_target_imbalanced_review`: a validated hybrid rule applies, both targets are sufficiently strong, but the observed peak-concentration balance fails the rule's tolerance;
+- `hybrid_candidate`: a validated, pair-specific profile rule applies, both targets are sufficiently strong, and the observed peak balance is compatible with the calibrated expectation.
+
+Detecting two matched biological targets is deliberately **not** sufficient on its own for `hybrid_candidate`. Real profiles often contain a dominant target and a much weaker secondary trace with orders-of-magnitude lower concentration; treating that pattern as an automatic hybrid call produces an implausibly high false-positive rate. `hybrid_candidate` requires an explicit `pcr_profile_rules` entry (see [`as_pcr_profile_rules()`]) with `calibration_status = "validated"`, an `expected_log2_ratio`, and a `max_abs_log2_deviation` derived from empirical calibration against independently confirmed samples — not from the automatically-called hybrid set itself, which is exactly the population under scrutiny. Until that calibration exists for a given target pair, dual-target samples resolve to a review state rather than a false hybrid call.
 
 The important habit is to treat review states as part of the result, not as errors to be discarded.
 
 ## Step 6. Add quality-control flags
 
-QC is not separate from interpretation. A call is easier to trust when the sample, controls, and run metadata are also consistent.
+QC is evaluated separately from scientific profile interpretation, but both must be considered before accepting a result. A call is easier to trust when the sample, controls, and run metadata are also consistent.
 
 ```{r qc}
 qc <- qc_pcr_run(peaks, sample_calls)
@@ -262,7 +291,7 @@ For real replicate designs, choose `replicate_keys` so that repeated wells, plat
 
 ## Step 9. Export reproducible results
 
-For routine work, the outputs should be written to files rather than copied by hand from the console. The export helper writes the evidence table, the sample call table, the QC table, and a simple summary report.
+For routine work, the outputs should be written to files rather than copied by hand from the console. The export helper writes the peak-evidence table, the profile-evidence table, the canonical profile-rules table actually used (or an explicit zero-row table when none were supplied), the sample-call table, the QC table, and a simple summary report, all sharing one provenance context (timestamp, package version, `interpretation_model_version`, and source revision when available).
 
 The code below is not run when the vignette is built because it writes files to an output directory.
 
@@ -273,7 +302,9 @@ report_out <- report_pcr_calls(
   qc = qc,
   output_dir = "pcr-results",
   format = "csv",
-  write_summary = TRUE
+  write_summary = TRUE,
+  profile_evidence = profile_evidence,
+  profile_rules = profile_rules
 )
 ```
 
