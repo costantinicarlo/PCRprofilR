@@ -23,6 +23,14 @@ window, minimum analytical concentration, biological label, and deterministic
 rule group. If \code{confirm_concentration} is absent, it is treated as equal to
 \code{min_concentration} for validation. If \code{target_role} is present, values must
 be \code{required}, \code{optional}, or \code{forbidden}.
+
+A canonical \code{pcr_assay} object represents exactly one assay: it must
+contain exactly one unique \code{assay_id}, and \verb{(assay_id, target_id)} pairs
+must be unique. \code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}} has no way to know which of several
+candidate assays produced an observed peak, so a multi-assay table would
+let targets from different assays combine or collapse silently.
+Multi-assay support requires assay identity in the observed-peak schema and
+is out of scope for this contract.
 }
 \seealso{
 \code{\link[=as_pcr_assay]{as_pcr_assay()}}, \code{\link[=detect_pcr_peaks]{detect_pcr_peaks()}}
